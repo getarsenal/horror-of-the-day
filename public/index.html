@@ -91,7 +91,11 @@
 
     <section class="vote card">
       <h2>Vote for tomorrow's horror</h2>
-      <p class="muted">The highest-scoring image becomes a future Horror of the Day. Upvote the truly revolting; downvote the merely mildly unpleasant.</p>
+      <p class="muted">The highest-scoring image becomes a future Horror of the Day. Upvote the truly revolting; downvote the merely mildly unpleasant. Tap an image to enlarge it.</p>
+      <div class="vote-status">
+        <span id="votes-left" class="vote-left"></span>
+        <span id="refresh-timer" class="muted"></span>
+      </div>
       <div id="candidates" class="grid">
         <p class="muted">Loading candidates…</p>
       </div>
@@ -121,6 +125,19 @@
   <footer>
     <p class="muted">Images from Wikimedia Commons &amp; community submissions. Built to be avoided.</p>
   </footer>
+
+  <!-- Lightbox: tap any image to enlarge and vote -->
+  <div id="lightbox" class="lightbox" hidden>
+    <div class="lb-backdrop" data-close></div>
+    <figure class="lb-figure">
+      <button class="lb-close" data-close aria-label="Close">✕</button>
+      <img id="lb-img" src="" alt="" />
+      <figcaption>
+        <div id="lb-title" class="lb-cap-title"></div>
+        <div id="lb-votes" class="vote-row"></div>
+      </figcaption>
+    </figure>
+  </div>
 
   <script src="/app.js"></script>
 </body>

@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 
 // Use an isolated in-memory DB for every run.
 process.env.CH_DB_PATH = ':memory:';
+// These tests exercise selection/leaderboard logic and reuse voter tokens, so
+// lift the per-day vote cap here (the cap is covered in voting.test.js).
+process.env.CH_DAILY_VOTE_LIMIT = '100000';
 
 let store;
 before(async () => {
@@ -25,11 +28,11 @@ test('cannot vote on unapproved images', () => {
 
 test('voting is one-per-voter and net-scored', () => {
   const { id } = store.addImage({ title: 'Blob', image_url: 'https://x/blob.jpg', status: 'approved' });
-  assert.equal(store.vote(id, 'a', 1), 1);
-  assert.equal(store.vote(id, 'b', 1), 2);
-  assert.equal(store.vote(id, 'c', -1), 1); // net = +1 +1 -1
-  // Re-voting overwrites, does not stack.
-  assert.equal(store.vote(id, 'a', -1), -1); // a flips: -1 +1 -1 = -1
+  assert.equal(store.vote(id, 'a', 1).score, 1);
+  assert.equal(store.vote(id, 'b', 1).score, 2);
+  assert.equal(store.vote(id, 'c', -1).score, 1); // net = +1 +1 -1
+  // Switching does not stack.
+  assert.equal(store.vote(id, 'a', -1).score, -1); // a flips: -1 +1 -1 = -1
 });
 
 test('leaderboard ranks by net score', () => {

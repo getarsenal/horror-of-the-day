@@ -73,9 +73,34 @@ export function listByStatus(status, limit = 100) {
     .all(status, limit);
 }
 
+/** Max new votes a single voter may cast per (UTC) day. */
+export const DAILY_VOTE_LIMIT = Number(process.env.CH_DAILY_VOTE_LIMIT) || 3;
+
+/** Votes this voter has cast today (UTC), used for the daily cap. */
+export function votesTodayCount(voterToken) {
+  return db
+    .prepare("SELECT COUNT(*) AS n FROM votes WHERE voter_token = ? AND date(created_at) = date('now')")
+    .get(voterToken).n;
+}
+
+export function votesRemaining(voterToken) {
+  return Math.max(0, DAILY_VOTE_LIMIT - votesTodayCount(voterToken));
+}
+
+/** This voter's current vote on each image, as { imageId: value }. */
+export function myVoteMap(voterToken) {
+  const rows = db.prepare('SELECT image_id, value FROM votes WHERE voter_token = ?').all(voterToken);
+  const map = {};
+  for (const r of rows) map[r.image_id] = r.value;
+  return map;
+}
+
 /**
- * Cast (or change) a vote. value must be +1 or -1. One vote per voter per image;
- * re-voting overwrites the previous value. Returns the image's new score.
+ * Cast, switch, or toggle a vote (value +1/-1).
+ *  - Re-sending the same value you already have removes the vote (toggle off).
+ *  - Switching 👍↔👎 updates in place (no new allowance used).
+ *  - A brand-new vote consumes one of the DAILY_VOTE_LIMIT per day.
+ * Returns { score, myVote (0 if cleared), remaining }.
  */
 export function vote(imageId, voterToken, value = 1) {
   if (![1, -1].includes(value)) throw new Error('vote value must be 1 or -1');
@@ -84,12 +109,29 @@ export function vote(imageId, voterToken, value = 1) {
   if (img.status !== 'approved') throw new Error('image is not open for voting');
   if (!voterToken) throw new Error('voter token required');
 
-  db.prepare(
-    `INSERT INTO votes (image_id, voter_token, value) VALUES (?, ?, ?)
-     ON CONFLICT (image_id, voter_token) DO UPDATE SET value = excluded.value`
-  ).run(imageId, voterToken, value);
+  const existing = db
+    .prepare('SELECT value FROM votes WHERE image_id = ? AND voter_token = ?')
+    .get(imageId, voterToken);
 
-  return scoreFor(imageId);
+  let myVote = value;
+  if (existing && existing.value === value) {
+    // Same choice again → remove it.
+    db.prepare('DELETE FROM votes WHERE image_id = ? AND voter_token = ?').run(imageId, voterToken);
+    myVote = 0;
+  } else if (existing) {
+    // Switch 👍↔👎 without consuming a new daily vote.
+    db.prepare('UPDATE votes SET value = ? WHERE image_id = ? AND voter_token = ?').run(value, imageId, voterToken);
+  } else {
+    // New vote → enforce the daily cap.
+    if (votesTodayCount(voterToken) >= DAILY_VOTE_LIMIT) {
+      const err = new Error(`daily vote limit reached (${DAILY_VOTE_LIMIT}/day)`);
+      err.code = 'VOTE_LIMIT';
+      throw err;
+    }
+    db.prepare('INSERT INTO votes (image_id, voter_token, value) VALUES (?, ?, ?)').run(imageId, voterToken, value);
+  }
+
+  return { score: scoreFor(imageId), myVote, remaining: votesRemaining(voterToken) };
 }
 
 export function scoreFor(imageId) {

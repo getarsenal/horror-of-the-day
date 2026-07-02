@@ -65,6 +65,7 @@ npm run import:wikimedia -- 5   # ~5 images per category
 | `CH_WALLPAPER_SIZE` | `1290x2796`   | Rendered wallpaper resolution                  |
 | `CH_WALLPAPER_RAW` | *(off)*        | `1` serves the untouched original (no processing) |
 | `CH_ALLOW_SUBMISSIONS` | *(on)*     | `0` closes public submissions entirely         |
+| `CH_DAILY_VOTE_LIMIT` | `3`         | Max new votes a voter can cast per day         |
 | `CH_NTFY_TOPIC`  | *(off)*          | ntfy.sh topic — push a phone alert per submission |
 | `CH_NTFY_SERVER` | `https://ntfy.sh` | Custom/self-hosted ntfy server (optional)     |
 

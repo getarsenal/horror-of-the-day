@@ -215,6 +215,24 @@ input[type="file"] { color: var(--muted); font-size: 0.9rem; }
 .lb-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
 .btn.danger { color: #e0546b; border: 1px solid #e0546b; }
 
+/* --- Voting status + countdown --- */
+.vote-status { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin: 0.25rem 0 0.75rem; }
+.vote-left { font-size: 0.9rem; font-weight: 600; }
+.vote-left.err { color: #e0546b; }
+#refresh-timer { font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+img.tappable { cursor: zoom-in; }
+
+/* --- Lightbox --- */
+.lightbox { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 1rem; }
+.lightbox[hidden] { display: none; }
+.lb-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(2px); }
+.lb-figure { position: relative; margin: 0; max-width: 640px; width: 100%; background: var(--card, #14111a); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.lb-figure img { display: block; width: 100%; max-height: 72vh; object-fit: contain; background: #000; }
+.lb-figure figcaption { padding: 0.9rem 1rem 1.1rem; text-align: center; }
+.lb-cap-title { font-weight: 600; margin-bottom: 0.6rem; }
+.lb-close { position: absolute; top: 0.5rem; right: 0.5rem; z-index: 2; width: 2rem; height: 2rem; border-radius: 50%; border: none; background: rgba(0,0,0,0.6); color: #fff; font-size: 1rem; cursor: pointer; }
+#lb-votes { justify-content: center; }
+
 .msg { min-height: 1.2em; font-size: 0.85rem; }
 .msg.ok { color: var(--accent); }
 .msg.err { color: #e0546b; }

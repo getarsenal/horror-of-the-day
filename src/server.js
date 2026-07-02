@@ -68,14 +68,32 @@ function toPublic(img) {
 
 // --- Public read endpoints -------------------------------------------------
 
+// Next daily refresh = next UTC midnight (when a new day's horror is picked).
+function nextRefreshISO() {
+  const now = new Date();
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0));
+  return next.toISOString();
+}
+
 app.get('/api/today', (req, res) => {
   const horror = store.horrorOfTheDay();
-  if (!horror) return res.status(404).json({ error: 'no approved images yet' });
-  res.json({ day: store.today(), horror: toPublic(horror) });
+  if (!horror) return res.status(404).json({ error: 'no approved images yet', next_refresh: nextRefreshISO() });
+  res.json({ day: store.today(), horror: toPublic(horror), next_refresh: nextRefreshISO() });
 });
 
 app.get('/api/candidates', (req, res) => {
-  res.json({ candidates: store.leaderboard(50).map(toPublic) });
+  const voterToken = req.query.voter_token;
+  const mine = voterToken ? store.myVoteMap(voterToken) : null;
+  const candidates = store.leaderboard(50).map((img) => {
+    const pub = toPublic(img);
+    if (mine) pub.my_vote = mine[img.id] ?? 0;
+    return pub;
+  });
+  res.json({
+    candidates,
+    votes_remaining: voterToken ? store.votesRemaining(voterToken) : undefined,
+    daily_vote_limit: store.DAILY_VOTE_LIMIT,
+  });
 });
 
 app.get('/api/history', (req, res) => {
@@ -239,10 +257,11 @@ app.post('/api/candidates/:id/vote', (req, res) => {
   const id = Number(req.params.id);
   const { voter_token, value } = req.body ?? {};
   try {
-    const score = store.vote(id, voter_token, value === -1 ? -1 : 1);
-    res.json({ id, score });
+    const result = store.vote(id, voter_token, value === -1 ? -1 : 1);
+    res.json({ id, score: result.score, my_vote: result.myVote, votes_remaining: result.remaining });
   } catch (err) {
-    const code = err.message === 'image not found' ? 404 : 400;
+    const code =
+      err.code === 'VOTE_LIMIT' ? 429 : err.message === 'image not found' ? 404 : 400;
     res.status(code).json({ error: err.message });
   }
 });
