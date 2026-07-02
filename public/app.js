@@ -1,4 +1,4 @@
-// Castle Hassle frontend — talks to the JSON API in src/server.js.
+// Horror of the Day frontend — talks to the JSON API in src/server.js.
 
 // A stable per-browser voter token so votes can be de-duplicated without login.
 const voterToken = (() => {
@@ -143,6 +143,28 @@ $('#submit-form').addEventListener('submit', async (e) => {
   }
 });
 
+// --- iOS Shortcut setup ----------------------------------------------------
+// If the host configured a signed iCloud shortcut link, point the button at it
+// and drop the "Allow Untrusted Shortcuts" step (signed shortcuts skip it).
+async function loadSetupConfig() {
+  try {
+    const cfg = await api('/api/config');
+    const link = $('#download-shortcut');
+    if (cfg.iosShortcutUrl) link.setAttribute('href', cfg.iosShortcutUrl);
+    if (cfg.iosShortcutSigned) {
+      link.removeAttribute('download'); // let iOS open the iCloud import sheet
+      const trust = $('#step-trust');
+      if (trust) trust.hidden = true;
+      const getNote = $('#get-note');
+      const signedNote = $('#signed-note');
+      if (getNote) getNote.hidden = true;
+      if (signedNote) signedNote.hidden = false;
+    }
+  } catch {
+    /* fall back to the built-in unsigned .shortcut + toggle instructions */
+  }
+}
+
 // --- Wallpaper URL widget --------------------------------------------------
 const wallpaperUrl = `${location.origin}/api/wallpaper/today.jpg`;
 $('#wallpaper-url').textContent = wallpaperUrl;
@@ -160,3 +182,4 @@ $('#copy-url').addEventListener('click', async () => {
 loadToday();
 loadCandidates();
 loadHistory();
+loadSetupConfig();

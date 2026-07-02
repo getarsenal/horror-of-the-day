@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Castle Hassle — The Horror of the Day</title>
+  <title>Horror of the Day</title>
   <meta name="description" content="A community-voted, deliberately disgusting daily wallpaper to make you not want to be on your phone." />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <header class="site-header">
-    <h1>🏰 Castle Hassle</h1>
-    <p class="tagline">The <strong>Horror of the Day</strong> — voted by the community, set as your wallpaper, so you actively avoid your phone.</p>
+    <h1>🫣 Horror of the Day</h1>
+    <p class="tagline">Voted by the community, set as your wallpaper — so you actively avoid your phone.</p>
   </header>
 
   <main>
@@ -31,9 +31,10 @@
           <p class="one-tap">
             <a id="download-shortcut" class="btn btn-lg" href="/api/ios/shortcut" download="Horror of the Day.shortcut">⬇︎ Add the Shortcut</a>
           </p>
-          <p class="muted">Open this page in <strong>Safari on your iPhone</strong> and tap the button. Tap <strong>Allow</strong> if asked to download, then open the file to add it to the Shortcuts app.</p>
+          <p class="muted" id="get-note">Open this page in <strong>Safari on your iPhone</strong> and tap the button. Tap <strong>Allow</strong> if asked to download, then open the file to add it to the Shortcuts app.</p>
+          <p class="muted signed-note" id="signed-note" hidden>Open this page in <strong>Safari on your iPhone</strong> and tap the button — it adds straight to the Shortcuts app. <strong>No settings to change.</strong></p>
         </li>
-        <li>
+        <li id="step-trust">
           <span class="step-h">Allow it to run (one time)</span>
           <p>In <strong>Settings → Shortcuts</strong>, turn on <strong>Allow Untrusted Shortcuts</strong>. Apple shows this for any shortcut not from its store — it's safe; this one only downloads today's image and sets your wallpaper.</p>
           <p class="muted">Don't see the toggle? Run any shortcut once (even this one), then it appears.</p>

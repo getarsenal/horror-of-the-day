@@ -56,6 +56,17 @@ app.get('/api/stats', (req, res) => {
   res.json(store.stats());
 });
 
+// Frontend config. If CH_SHORTCUT_ICLOUD_URL is set (an Apple-signed iCloud
+// share link), the setup flow uses it and drops the "Allow Untrusted Shortcuts"
+// step — signed shortcuts import with no settings change.
+app.get('/api/config', (req, res) => {
+  const iCloud = process.env.CH_SHORTCUT_ICLOUD_URL;
+  res.json({
+    iosShortcutUrl: iCloud || '/api/ios/shortcut',
+    iosShortcutSigned: Boolean(iCloud),
+  });
+});
+
 // The endpoint an iOS Shortcut / Android job hits to grab today's wallpaper.
 // 302-redirects straight to the image bytes so "Get Contents of URL" just works.
 app.get('/api/wallpaper/today.jpg', (req, res) => {
@@ -179,7 +190,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       const r = runSeed();
       console.log(`   Auto-seeded ${r.added} starter image(s) into an empty catalog.`);
     }
-    console.log(`🏰 Castle Hassle running on http://localhost:${PORT}`);
+    console.log(`🫣 Horror of the Day running on http://localhost:${PORT}`);
     console.log(`   Horror-of-the-day API:  GET /api/today`);
     console.log(`   Wallpaper for Shortcut: GET /api/wallpaper/today.jpg`);
     console.log(`   Admin key: ${ADMIN_KEY === 'dev-admin-key' ? '(using insecure dev default — set CH_ADMIN_KEY)' : '(set)'}`);

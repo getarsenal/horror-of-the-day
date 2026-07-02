@@ -81,11 +81,32 @@ instead of the in-process scheduler, leave `CH_NIGHTLY` unset and add:
 | ------------------ | --------------------------- | ---------------------------------------------------------- |
 | `PORT`             | `3000`                      | Port to listen on.                                         |
 | `CH_ADMIN_KEY`     | `dev-admin-key` (insecure)  | **Set this.** Guards all `/api/moderation/*` routes.       |
-| `CH_DB_PATH`       | `data/castle-hassle.db`     | SQLite file location. Point at a mounted volume to persist.|
+| `CH_DB_PATH`       | `data/horror-of-the-day.db` | SQLite file location. Point at a mounted volume to persist.|
 | `CH_NIGHTLY`       | *(off)*                     | `1` enables the in-process nightly scheduler.              |
 | `CH_NIGHTLY_HOUR`  | `3`                         | UTC hour the nightly job runs.                             |
 | `CH_NIGHTLY_IMPORT`| *(on)*                      | `0` disables the Wikimedia import step of the nightly job. |
 | `CH_SEED_ON_START` | *(on)*                      | `0` disables auto-seeding an empty catalog on boot.        |
+| `CH_SHORTCUT_ICLOUD_URL` | *(unset)*             | A signed iCloud shortcut link. Set it for a zero-settings, one-tap install (see below). |
+
+## Zero-settings install for the people you share with (recommended)
+
+By default the app serves an *unsigned* `.shortcut`, so each recipient has to
+flip **Allow Untrusted Shortcuts** once. You can remove that step entirely by
+publishing the shortcut as an **Apple-signed iCloud link** — do this once on
+your own iPhone and everyone you share with installs it with no settings change:
+
+1. On your iPhone, open your deployed site and add the shortcut once (or build
+   it by hand: *Get Contents of URL* → your `/api/wallpaper/today.jpg` →
+   *Set Wallpaper*).
+2. In the Shortcuts app, long-press the shortcut → **Share** → **Copy iCloud
+   Link**. You'll get a URL like `https://www.icloud.com/shortcuts/abc123…`.
+3. Set it as an env var and redeploy:
+   `CH_SHORTCUT_ICLOUD_URL=https://www.icloud.com/shortcuts/abc123…`
+
+Now the **Add the Shortcut** button points at the signed link and the setup
+flow automatically drops the "Allow Untrusted Shortcuts" step. (Verify the link
+imports cleanly on a device — Apple occasionally expires iCloud shortcut links,
+in which case re-share and update the env var.)
 
 ## After it's live
 
