@@ -75,7 +75,7 @@ function featureCard(which, data) {
   const h = data.horror;
   const label = which === 'today' ? "Today's Horror" : "Tomorrow's Horror";
   const preview = h
-    ? `<div class="phone"><img src="${esc(h.image_url)}" alt="" referrerpolicy="no-referrer" /></div>`
+    ? `<div class="phone"><img src="/api/wallpaper/preview.jpg?image_id=${h.id}" alt="" referrerpolicy="no-referrer" /></div>`
     : `<div class="phone empty">no pick yet<br /><span class="muted small">auto-selects on first view</span></div>`;
   return `
     <div class="feature">

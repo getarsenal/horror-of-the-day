@@ -61,6 +61,9 @@ npm run import:wikimedia -- 5   # ~5 images per category
 | `CH_NIGHTLY`     | *(off)*          | `1` runs the nightly job in-process            |
 | `CH_SEED_ON_START` | *(on)*         | `0` disables auto-seeding an empty catalog     |
 | `CH_MAX_ASPECT`  | `1.0`            | Max width/height for a "phone-friendly" image  |
+| `CH_WALLPAPER_FIT` | `cover`        | `cover` (fill+crop) or `contain` (whole image on dark) |
+| `CH_WALLPAPER_SIZE` | `1290x2796`   | Rendered wallpaper resolution                  |
+| `CH_WALLPAPER_RAW` | *(off)*        | `1` serves the untouched original (no processing) |
 | `CH_ALLOW_SUBMISSIONS` | *(on)*     | `0` closes public submissions entirely         |
 | `CH_NTFY_TOPIC`  | *(off)*          | ntfy.sh topic — push a phone alert per submission |
 | `CH_NTFY_SERVER` | `https://ntfy.sh` | Custom/self-hosted ntfy server (optional)     |
@@ -105,7 +108,7 @@ Public:
 | Method | Path                          | Description                                   |
 | ------ | ----------------------------- | --------------------------------------------- |
 | GET    | `/api/today`                  | Today's Horror of the Day (auto-selects)      |
-| GET    | `/api/wallpaper/today.jpg`    | 302 → today's image bytes (for Shortcuts)     |
+| GET    | `/api/wallpaper/today.jpg`    | Today's wallpaper, processed to fill a phone (`?raw=1` for the original) |
 | GET    | `/api/ios/shortcut`           | Download a ready-made `.shortcut` (see below) |
 | GET    | `/api/config`                 | Frontend config (which shortcut link to use)  |
 | GET    | `/api/candidates`             | Approved images, ranked by net vote score     |

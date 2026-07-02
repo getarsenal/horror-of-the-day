@@ -19,7 +19,8 @@
     "better-sqlite3": "^11.8.1",
     "express": "^4.21.2",
     "image-size": "^1.2.1",
-    "multer": "^2.2.0"
+    "multer": "^2.2.0",
+    "sharp": "^0.35.3"
   },
   "license": "MIT"
 }

@@ -11,6 +11,7 @@ import { buildWallpaperShortcut } from './shortcut.js';
 import { runNightly, scheduleNightly, backfillDimensions, tomorrow } from './nightly.js';
 import { isPhoneFriendly } from './aspect.js';
 import { notifySubmissionAsync, sendPush, ntfyConfig } from './notify.js';
+import { renderWallpaperCached } from './wallpaper.js';
 import { runSeed } from './seed.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -97,18 +98,60 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-// The endpoint an iOS Shortcut / Android job hits to grab today's wallpaper.
-// 302-redirects straight to the image bytes so "Get Contents of URL" just works.
-app.get('/api/wallpaper/today.jpg', (req, res) => {
+// Resolve an image row to its raw source bytes: uploaded images come from the
+// DB, everything else is fetched from its URL.
+async function sourceBytesFor(image) {
+  const local = image.image_url.match(/^\/api\/images\/([^./]+)/);
+  if (local) {
+    const file = store.getImageFile(local[1]);
+    if (!file) throw new Error('uploaded image missing');
+    return file.data;
+  }
+  const r = await fetch(image.image_url);
+  if (!r.ok) throw new Error(`source fetch ${r.status}`);
+  return Buffer.from(await r.arrayBuffer());
+}
+
+function absoluteImageUrl(req, image) {
+  return image.image_url.startsWith('/')
+    ? `${req.protocol}://${req.get('host')}${image.image_url}`
+    : image.image_url;
+}
+
+// The endpoint the iOS Shortcut hits. Serves a processed full-bleed wallpaper
+// (fills the phone, smart-cropped, dark background). `?raw=1` (or
+// CH_WALLPAPER_RAW=1) 302-redirects to the untouched original instead.
+app.get('/api/wallpaper/today.jpg', async (req, res) => {
   try { store.recordMetric('wallpaper_fetch'); } catch { /* best-effort */ }
   const horror = store.horrorOfTheDay();
   if (!horror) return res.status(404).json({ error: 'no approved images yet' });
-  // Uploaded images are stored as site-relative URLs; make them absolute so the
-  // iOS Shortcut's "Get Contents of URL" can fetch them.
-  const url = horror.image_url.startsWith('/')
-    ? `${req.protocol}://${req.get('host')}${horror.image_url}`
-    : horror.image_url;
-  res.redirect(302, url);
+
+  if (req.query.raw === '1' || process.env.CH_WALLPAPER_RAW === '1') {
+    return res.redirect(302, absoluteImageUrl(req, horror));
+  }
+  try {
+    const out = await renderWallpaperCached(horror.image_url, await sourceBytesFor(horror));
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=3600');
+    return res.send(out);
+  } catch {
+    // Never leave the phone without a wallpaper — fall back to the original.
+    return res.redirect(302, absoluteImageUrl(req, horror));
+  }
+});
+
+// Processed wallpaper preview for any image by id (used by the dashboard).
+app.get('/api/wallpaper/preview.jpg', async (req, res) => {
+  const image = store.getImage(Number(req.query.image_id));
+  if (!image) return res.status(404).json({ error: 'image not found' });
+  try {
+    const out = await renderWallpaperCached(image.image_url, await sourceBytesFor(image));
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(out);
+  } catch (err) {
+    res.status(502).json({ error: `preview failed: ${err.message}` });
+  }
 });
 
 // One-tap iOS setup: download a Shortcut that fetches the daily wallpaper URL
