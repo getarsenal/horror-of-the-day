@@ -1,7 +1,7 @@
 # Horror of the Day — production container.
 # better-sqlite3 is a native module; the build tools let it compile if a
 # prebuilt binary isn't available for the target platform.
-FROM node:18-bookworm-slim
+FROM node:22-bookworm-slim
 
 ENV NODE_ENV=production
 
