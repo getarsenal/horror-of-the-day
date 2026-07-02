@@ -74,7 +74,9 @@ nightly job feeds the queue and pre-selects each day's horror, and a fresh
 database auto-seeds the 8 starter images on first boot.
 
 - **Render** — this repo ships a `render.yaml` blueprint (New → Blueprint →
-  pick the repo; it even generates `CH_ADMIN_KEY` for you).
+  pick the repo; it even generates `CH_ADMIN_KEY` for you). Or one-click it:
+
+  [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/getarsenal/horror-of-the-day)
 - **Docker / Fly / Railway / VPS** — this repo ships a `Dockerfile` (DB on a
   `/data` volume, nightly job on).
 
