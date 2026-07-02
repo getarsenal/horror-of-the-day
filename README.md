@@ -13,13 +13,10 @@ horror of the day.
 
 **No App Store app can silently reset your Home Screen wallpaper every day on
 its own** — iOS sandboxes that. So the "my phone changed itself overnight"
-magic has two real paths, and this project provides the backend both consume:
-
-- **iOS** → an **Apple Shortcut** with a daily *Automation* + the built-in
-  **Set Wallpaper** action that fetches today's image from this server. Works
-  today, no jailbreak. Setup steps are in the app UI and below.
-- **Android** → a small native app (planned) can do it fully automatically via
-  `WallpaperManager` on a daily background job.
+magic runs through an **Apple Shortcut**: a daily *Automation* + the built-in
+**Set Wallpaper** action fetches today's image from this server. Works today,
+no jailbreak, no App Store review. The app generates that Shortcut for you —
+setup steps are in the app UI and below.
 
 Everything else — voting, the daily "photo of the day" selection, submissions,
 moderation, sourcing — is this web app / JSON API.
@@ -82,6 +79,19 @@ database auto-seeds the 8 starter images on first boot.
 
 Full step-by-step for each in **[DEPLOY.md](DEPLOY.md)**.
 
+## Share it with friends
+
+You host once; everyone you share with just needs an iPhone. **They never sign
+into GitHub, Render, or anything** — hosting is your one-time step, invisible to
+them.
+
+1. Deploy (above) to get a public URL, e.g. `https://horror-of-the-day.onrender.com`.
+2. Send that link to whoever you want.
+3. They open it in **Safari on iPhone** and follow the on-page steps: tap **Add
+   the Shortcut**, allow it once, add a daily automation. Done.
+
+Their entire experience is one web page and one button — no App Store, no
+account.
 ## API
 
 Public:
@@ -165,10 +175,10 @@ test/            node:test suite for the domain logic
 
 ## Roadmap
 
-- Native Android app (true daily auto-wallpaper via `WallpaperManager`)
-- Downscale/crop imports to a phone aspect ratio and cache the bytes
+- Downscale/crop imports to iPhone aspect ratios and cache the bytes (own the
+  hosting instead of hotlinking Commons)
 - Accounts / rate limiting to harden voting against ballot-stuffing
-- Auto-run the Wikimedia import + a nightly "select tomorrow's horror" job
+- Signed Shortcut distribution (removes the "Allow Untrusted Shortcuts" step)
 
 ## Tests
 
