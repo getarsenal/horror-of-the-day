@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import * as store from './store.js';
 import { fetchCandidates, HORROR_CATEGORIES } from './wikimedia.js';
 import { buildWallpaperShortcut } from './shortcut.js';
+import { runNightly, scheduleNightly } from './nightly.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -150,6 +151,20 @@ app.post('/api/moderation/import', requireAdmin, async (req, res) => {
   }
 });
 
+// Manually trigger the nightly job (import + pre-select tomorrow) on demand.
+app.post('/api/moderation/nightly', requireAdmin, async (req, res) => {
+  const { import: doImport = true, perCategory } = req.body ?? {};
+  try {
+    const summary = await runNightly({
+      doImport: doImport !== false,
+      perCategory: Number(perCategory) || 5,
+    });
+    res.json(summary);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
@@ -161,6 +176,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(`   Horror-of-the-day API:  GET /api/today`);
     console.log(`   Wallpaper for Shortcut: GET /api/wallpaper/today.jpg`);
     console.log(`   Admin key: ${ADMIN_KEY === 'dev-admin-key' ? '(using insecure dev default — set CH_ADMIN_KEY)' : '(set)'}`);
+    // Opt-in in-process nightly scheduler (CH_NIGHTLY=1); otherwise use `npm run nightly` via cron.
+    if (process.env.CH_NIGHTLY === '1') scheduleNightly();
   });
 }
 

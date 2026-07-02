@@ -9,6 +9,7 @@
     "dev": "node --watch src/server.js",
     "seed": "node src/seed.js",
     "import:wikimedia": "node src/import-cli.js",
+    "nightly": "node src/nightly-cli.js",
     "test": "node --test"
   },
   "engines": {
