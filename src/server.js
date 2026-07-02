@@ -5,6 +5,7 @@ import * as store from './store.js';
 import { fetchCandidates, HORROR_CATEGORIES } from './wikimedia.js';
 import { buildWallpaperShortcut } from './shortcut.js';
 import { runNightly, scheduleNightly } from './nightly.js';
+import { runSeed } from './seed.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -172,6 +173,12 @@ const PORT = process.env.PORT || 3000;
 // Only start listening when run directly (not when imported by tests).
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   app.listen(PORT, () => {
+    // Auto-seed a fresh/empty catalog so a new deploy has content on first boot
+    // without a manual shell step. Disable with CH_SEED_ON_START=0.
+    if (process.env.CH_SEED_ON_START !== '0' && store.stats().approved === 0) {
+      const r = runSeed();
+      console.log(`   Auto-seeded ${r.added} starter image(s) into an empty catalog.`);
+    }
     console.log(`🏰 Castle Hassle running on http://localhost:${PORT}`);
     console.log(`   Horror-of-the-day API:  GET /api/today`);
     console.log(`   Wallpaper for Shortcut: GET /api/wallpaper/today.jpg`);

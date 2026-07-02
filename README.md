@@ -56,11 +56,29 @@ npm run import:wikimedia -- 5   # ~5 images per category
 
 ### Config
 
-| Env var         | Default          | Purpose                                  |
-| --------------- | ---------------- | ---------------------------------------- |
-| `PORT`          | `3000`           | HTTP port                                |
-| `CH_ADMIN_KEY`  | `dev-admin-key`  | Key for moderation endpoints (set this!) |
-| `CH_DB_PATH`    | `data/castle-hassle.db` | SQLite location (`:memory:` for tests) |
+| Env var          | Default          | Purpose                                        |
+| ---------------- | ---------------- | ---------------------------------------------- |
+| `PORT`           | `3000`           | HTTP port                                      |
+| `CH_ADMIN_KEY`   | `dev-admin-key`  | Key for moderation endpoints (set this!)       |
+| `CH_DB_PATH`     | `data/castle-hassle.db` | SQLite location (`:memory:` for tests)  |
+| `CH_NIGHTLY`     | *(off)*          | `1` runs the nightly job in-process            |
+| `CH_SEED_ON_START` | *(on)*         | `0` disables auto-seeding an empty catalog     |
+
+See **[DEPLOY.md](DEPLOY.md)** for the full env-var list.
+
+## Deploy it live
+
+The app is meant to be hosted once at a public HTTPS URL; then anyone can open
+it on their phone and tap **Download the iOS Shortcut**. It's self-running: the
+nightly job feeds the queue and pre-selects each day's horror, and a fresh
+database auto-seeds the 8 starter images on first boot.
+
+- **Render** — this repo ships a `render.yaml` blueprint (New → Blueprint →
+  pick the repo; it even generates `CH_ADMIN_KEY` for you).
+- **Docker / Fly / Railway / VPS** — this repo ships a `Dockerfile` (DB on a
+  `/data` volume, nightly job on).
+
+Full step-by-step for each in **[DEPLOY.md](DEPLOY.md)**.
 
 ## API
 

@@ -1,0 +1,29 @@
+# Render Blueprint — one-click deploy.
+# In the Render dashboard: New → Blueprint → point at this repo. Render reads
+# this file, provisions the service, and generates a secret CH_ADMIN_KEY for you.
+#
+# The free plan has ephemeral storage (the DB resets when the instance restarts,
+# but the app auto-seeds the 8 starter images each boot, so it always works).
+# For persistent votes/history, switch `plan` to `starter` and uncomment the
+# `disk:` block below — a mounted disk keeps the SQLite file across redeploys.
+services:
+  - type: web
+    name: horror-of-the-day
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: node src/server.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: CH_ADMIN_KEY
+        generateValue: true # Render creates a strong random value
+      - key: CH_NIGHTLY
+        value: "1" # in-process nightly import + pre-select (daily 03:00 UTC)
+      # For persistence, set this to the disk mount path and enable `disk:` below.
+      # - key: CH_DB_PATH
+      #   value: /data/castle-hassle.db
+    # disk:
+    #   name: data
+    #   mountPath: /data
+    #   sizeGB: 1
