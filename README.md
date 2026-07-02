@@ -1,4 +1,4 @@
-# 🏰 Castle Hassle — The Horror of the Day
+# 🫣 Horror of the Day
 
 A deliberately **disgusting (but strictly SFW)** daily wallpaper, chosen by
 community vote, meant to make you *not* want to be on your phone. Every day the
@@ -57,11 +57,13 @@ npm run import:wikimedia -- 5   # ~5 images per category
 | ---------------- | ---------------- | ---------------------------------------------- |
 | `PORT`           | `3000`           | HTTP port                                      |
 | `CH_ADMIN_KEY`   | `dev-admin-key`  | Key for moderation endpoints (set this!)       |
-| `CH_DB_PATH`     | `data/castle-hassle.db` | SQLite location (`:memory:` for tests)  |
+| `CH_DB_PATH`     | `data/horror-of-the-day.db` | SQLite location (`:memory:` for tests) |
 | `CH_NIGHTLY`     | *(off)*          | `1` runs the nightly job in-process            |
 | `CH_SEED_ON_START` | *(on)*         | `0` disables auto-seeding an empty catalog     |
 
-See **[DEPLOY.md](DEPLOY.md)** for the full env-var list.
+See **[DEPLOY.md](DEPLOY.md)** for the full env-var list. (The `CH_` prefix is a
+legacy short-name from the project's original repo; it's internal only — nobody
+you share the app with ever sees it.)
 
 ## Deploy it live
 
@@ -101,6 +103,7 @@ Public:
 | GET    | `/api/today`                  | Today's Horror of the Day (auto-selects)      |
 | GET    | `/api/wallpaper/today.jpg`    | 302 → today's image bytes (for Shortcuts)     |
 | GET    | `/api/ios/shortcut`           | Download a ready-made `.shortcut` (see below) |
+| GET    | `/api/config`                 | Frontend config (which shortcut link to use)  |
 | GET    | `/api/candidates`             | Approved images, ranked by net vote score     |
 | GET    | `/api/history`                | Past days' horrors                            |
 | GET    | `/api/stats`                  | Catalog counts                                |

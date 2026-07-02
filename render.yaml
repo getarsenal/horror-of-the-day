@@ -22,7 +22,7 @@ services:
         value: "1" # in-process nightly import + pre-select (daily 03:00 UTC)
       # For persistence, set this to the disk mount path and enable `disk:` below.
       # - key: CH_DB_PATH
-      #   value: /data/castle-hassle.db
+      #   value: /data/horror-of-the-day.db
     # disk:
     #   name: data
     #   mountPath: /data

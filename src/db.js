@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // DB path is configurable so tests can use an in-memory / temp database.
-const DB_PATH = process.env.CH_DB_PATH || `${__dirname}/../data/castle-hassle.db`;
+const DB_PATH = process.env.CH_DB_PATH || `${__dirname}/../data/horror-of-the-day.db`;
 
 if (DB_PATH !== ':memory:') {
   mkdirSync(dirname(DB_PATH), { recursive: true });

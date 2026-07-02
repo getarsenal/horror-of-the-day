@@ -21,7 +21,7 @@ COPY . .
 
 # Persist the SQLite DB on a mounted volume so votes/history survive redeploys.
 ENV PORT=3000
-ENV CH_DB_PATH=/data/castle-hassle.db
+ENV CH_DB_PATH=/data/horror-of-the-day.db
 # Hands-off: run the nightly import + pre-select in-process (daily 03:00 UTC).
 ENV CH_NIGHTLY=1
 VOLUME ["/data"]
