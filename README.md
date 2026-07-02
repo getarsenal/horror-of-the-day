@@ -70,6 +70,7 @@ Public:
 | ------ | ----------------------------- | --------------------------------------------- |
 | GET    | `/api/today`                  | Today's Horror of the Day (auto-selects)      |
 | GET    | `/api/wallpaper/today.jpg`    | 302 → today's image bytes (for Shortcuts)     |
+| GET    | `/api/ios/shortcut`           | Download a ready-made `.shortcut` (see below) |
 | GET    | `/api/candidates`             | Approved images, ranked by net vote score     |
 | GET    | `/api/history`                | Past days' horrors                            |
 | GET    | `/api/stats`                  | Catalog counts                                |
@@ -86,6 +87,30 @@ Admin (require header `x-admin-key: <CH_ADMIN_KEY>`):
 | POST   | `/api/moderation/import`        | Import from Wikimedia Commons         |
 
 ## iOS auto-wallpaper (the deterrent)
+
+### One-tap: download the generated Shortcut
+
+Visit the app in Safari and tap **⬇︎ Download the iOS Shortcut**, or hit
+`GET /api/ios/shortcut` directly. The server generates a `.shortcut` whose
+"Get Contents of URL" action already points at *your* deployment's
+`/api/wallpaper/today.jpg` (the URL is built from the request host) and pipes
+it straight into **Set Wallpaper**.
+
+Because Apple only signs shortcuts through its own private service, this is an
+**unsigned** shortcut. To import one:
+
+1. Enable **Settings → Shortcuts → Allow Untrusted Shortcuts** (the toggle only
+   appears after you've run any one shortcut once).
+2. Open the downloaded `.shortcut` file to import it.
+3. Add a daily **Automation** (Shortcuts → Automation → Time of Day → **Run
+   Immediately**) that runs it, so it fires hands-free every morning.
+
+> The generated shortcut is a standard XML plist validated to parse as an Apple
+> property list; the action identifiers (`is.workflow.actions.downloadurl` and
+> `is.workflow.actions.wallpaper.set`) should be confirmed on a physical device
+> across iOS versions, since Apple occasionally renames actions.
+
+### Manual build (no untrusted-shortcuts toggle needed)
 
 1. **Shortcuts** app → **Automation** → **+** → **Time of Day** → pick a time
    (e.g. 6:00 AM), Daily, **Run Immediately**.
@@ -110,6 +135,7 @@ src/
   db.js          SQLite schema + connection
   store.js       Domain logic: submit, vote, leaderboard, daily selection
   wikimedia.js   Wikimedia Commons category importer
+  shortcut.js    Generates the unsigned iOS `.shortcut` (plist)
   server.js      Express JSON API + static hosting
   seed.js        Curated starter set (npm run seed)
   import-cli.js  CLI importer (npm run import:wikimedia)

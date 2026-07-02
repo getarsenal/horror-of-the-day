@@ -26,14 +26,28 @@
       <p>Point any daily automation at this URL and it will always serve today's horror:</p>
       <code id="wallpaper-url" class="wallpaper-url"></code>
       <button id="copy-url" class="btn btn-ghost">Copy URL</button>
-      <details>
+      <details open>
         <summary>📱 iOS (Shortcuts) — auto-changes every morning</summary>
-        <ol>
-          <li>Open <strong>Shortcuts</strong> → <strong>Automation</strong> → <strong>+</strong> → <strong>Time of Day</strong>, pick a time (e.g. 6:00 AM), Daily, <em>Run Immediately</em>.</li>
-          <li>Add action <strong>Get Contents of URL</strong> → paste the wallpaper URL above.</li>
-          <li>Add action <strong>Set Wallpaper Photo</strong> → use the downloaded image; turn off "Show Preview".</li>
-          <li>Done. Every morning your Home &amp; Lock screen becomes the new horror.</li>
-        </ol>
+        <p class="one-tap">
+          <a id="download-shortcut" class="btn" href="/api/ios/shortcut" download="Horror of the Day.shortcut">⬇︎ Download the iOS Shortcut</a>
+        </p>
+        <p class="muted">
+          It's an unsigned shortcut, so first enable
+          <strong>Settings → Shortcuts → Allow Untrusted Shortcuts</strong>
+          (that toggle only appears after you've run any one shortcut once).
+          Then open the downloaded file to import it. Prefer to build it by hand?
+          The manual steps are below.
+        </p>
+        <details>
+          <summary>Build it manually instead</summary>
+          <ol>
+            <li>Open <strong>Shortcuts</strong> → <strong>Automation</strong> → <strong>+</strong> → <strong>Time of Day</strong>, pick a time (e.g. 6:00 AM), Daily, <em>Run Immediately</em>.</li>
+            <li>Add action <strong>Get Contents of URL</strong> → paste the wallpaper URL above.</li>
+            <li>Add action <strong>Set Wallpaper Photo</strong> → use the downloaded image; turn off "Show Preview".</li>
+            <li>Done. Every morning your Home &amp; Lock screen becomes the new horror.</li>
+          </ol>
+        </details>
+        <p class="muted">Either way, add a daily <strong>Automation</strong> (Time of Day → Run Immediately) that runs this shortcut so it changes hands-free every morning.</p>
       </details>
       <details>
         <summary>🤖 Android</summary>

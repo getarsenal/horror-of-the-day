@@ -3,9 +3,11 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as store from './store.js';
 import { fetchCandidates, HORROR_CATEGORIES } from './wikimedia.js';
+import { buildWallpaperShortcut } from './shortcut.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.set('trust proxy', true); // honor X-Forwarded-Proto/Host so generated URLs are correct behind a proxy
 app.use(express.json({ limit: '64kb' }));
 app.use(express.static(`${__dirname}/../public`));
 
@@ -58,6 +60,17 @@ app.get('/api/wallpaper/today.jpg', (req, res) => {
   const horror = store.horrorOfTheDay();
   if (!horror) return res.status(404).json({ error: 'no approved images yet' });
   res.redirect(302, horror.image_url);
+});
+
+// One-tap iOS setup: download a Shortcut that fetches the daily wallpaper URL
+// and sets it as the wallpaper. It's an unsigned shortcut, so the user must
+// enable Settings → Shortcuts → Allow Untrusted Shortcuts to import it.
+app.get('/api/ios/shortcut', (req, res) => {
+  const wallpaperUrl = `${req.protocol}://${req.get('host')}/api/wallpaper/today.jpg`;
+  const shortcut = buildWallpaperShortcut(wallpaperUrl);
+  res.set('Content-Type', 'application/octet-stream');
+  res.set('Content-Disposition', 'attachment; filename="Horror of the Day.shortcut"');
+  res.send(shortcut);
 });
 
 // --- Public write endpoints ------------------------------------------------

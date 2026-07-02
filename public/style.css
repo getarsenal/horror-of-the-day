@@ -113,6 +113,8 @@ details li { margin-bottom: 0.35rem; }
   cursor: pointer;
 }
 .btn:hover { filter: brightness(1.08); }
+a.btn { display: inline-block; text-decoration: none; }
+.one-tap { margin: 0.75rem 0 0.25rem; }
 .btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--border); }
 .btn-vote {
   flex: 1;
