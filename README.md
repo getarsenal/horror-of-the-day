@@ -62,6 +62,8 @@ npm run import:wikimedia -- 5   # ~5 images per category
 | `CH_SEED_ON_START` | *(on)*         | `0` disables auto-seeding an empty catalog     |
 | `CH_MAX_ASPECT`  | `1.0`            | Max width/height for a "phone-friendly" image  |
 | `CH_ALLOW_SUBMISSIONS` | *(on)*     | `0` closes public submissions entirely         |
+| `CH_NTFY_TOPIC`  | *(off)*          | ntfy.sh topic — push a phone alert per submission |
+| `CH_NTFY_SERVER` | `https://ntfy.sh` | Custom/self-hosted ntfy server (optional)     |
 
 See **[DEPLOY.md](DEPLOY.md)** for the full env-var list. (The `CH_` prefix is a
 legacy short-name from the project's original repo; it's internal only — nobody
@@ -178,6 +180,15 @@ good. You can also trigger a Wikimedia import from there.
 Prefer not to accept public submissions at all? Set `CH_ALLOW_SUBMISSIONS=0` —
 the submit form disappears and the endpoint refuses posts, so the only content
 is what you import and approve yourself.
+
+### Get pinged on new submissions (ntfy push)
+
+1. Install the **ntfy** app (iOS/Android) and pick a long, random topic name
+   (it's the shared secret — e.g. `hotd-mod-9f3k2xqp`). Subscribe to it.
+2. Set `CH_NTFY_TOPIC=hotd-mod-9f3k2xqp` on your deploy and redeploy.
+3. Every new submission sends a push with the image and a tap-through to
+   `/admin.html`. Confirm it works with
+   `POST /api/moderation/test-notify` (admin) or the button in the console.
 
 ## Project layout
 

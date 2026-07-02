@@ -10,6 +10,7 @@ import { fetchCandidates, HORROR_CATEGORIES } from './wikimedia.js';
 import { buildWallpaperShortcut } from './shortcut.js';
 import { runNightly, scheduleNightly, backfillDimensions } from './nightly.js';
 import { isPhoneFriendly } from './aspect.js';
+import { notifySubmissionAsync, sendPush, ntfyConfig } from './notify.js';
 import { runSeed } from './seed.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -162,6 +163,12 @@ app.post('/api/submit', upload.single('image'), (req, res) => {
 
   try {
     const result = store.addImage({ title, image_url, source_url, credit, submitted_by, status: 'pending', width, height });
+    if (result.created) {
+      // Ping the moderator (best-effort; never blocks the response).
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const absImage = image_url.startsWith('/') ? `${origin}${image_url}` : image_url;
+      notifySubmissionAsync({ title, imageUrl: absImage, adminUrl: `${origin}/admin.html` });
+    }
     res.status(result.created ? 201 : 200).json({
       ...result,
       message: result.created
@@ -253,6 +260,20 @@ app.post('/api/moderation/backfill-dimensions', requireAdmin, async (req, res) =
   } catch (err) {
     res.status(502).json({ error: `backfill failed: ${err.message}` });
   }
+});
+
+// Send a test push so you can confirm ntfy is wired up before going live.
+app.post('/api/moderation/test-notify', requireAdmin, async (req, res) => {
+  if (!ntfyConfig()) {
+    return res.status(400).json({ error: 'notifications are off — set CH_NTFY_TOPIC' });
+  }
+  const origin = `${req.protocol}://${req.get('host')}`;
+  const result = await sendPush({
+    title: 'Horror of the Day',
+    body: 'Test notification — you’re set up! 🎉',
+    click: `${origin}/admin.html`,
+  });
+  res.status(result.sent ? 200 : 502).json(result);
 });
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
