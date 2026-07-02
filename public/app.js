@@ -144,24 +144,22 @@ $('#submit-form').addEventListener('submit', async (e) => {
 });
 
 // --- iOS Shortcut setup ----------------------------------------------------
-// If the host configured a signed iCloud shortcut link, point the button at it
-// and drop the "Allow Untrusted Shortcuts" step (signed shortcuts skip it).
+// Recent iOS refuses to import unsigned .shortcut files, so the default flow is
+// the manual build. If the host published a signed iCloud link, swap in the
+// one-tap install instead.
 async function loadSetupConfig() {
   try {
     const cfg = await api('/api/config');
-    const link = $('#download-shortcut');
-    if (cfg.iosShortcutUrl) link.setAttribute('href', cfg.iosShortcutUrl);
-    if (cfg.iosShortcutSigned) {
-      link.removeAttribute('download'); // let iOS open the iCloud import sheet
-      const trust = $('#step-trust');
-      if (trust) trust.hidden = true;
-      const getNote = $('#get-note');
-      const signedNote = $('#signed-note');
-      if (getNote) getNote.hidden = true;
-      if (signedNote) signedNote.hidden = false;
+    if (cfg.iosShortcutSigned && cfg.iosShortcutUrl) {
+      const link = $('#download-shortcut');
+      if (link) link.setAttribute('href', cfg.iosShortcutUrl);
+      const oneTap = $('#setup-oneTap');
+      const manual = $('#setup-manual');
+      if (oneTap) oneTap.hidden = false;
+      if (manual) manual.hidden = true;
     }
   } catch {
-    /* fall back to the built-in unsigned .shortcut + toggle instructions */
+    /* keep the manual build steps (the universal fallback) */
   }
 }
 

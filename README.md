@@ -121,38 +121,36 @@ Admin (require header `x-admin-key: <CH_ADMIN_KEY>`):
 
 ## iOS auto-wallpaper (the deterrent)
 
-### One-tap: download the generated Shortcut
+> **Heads up on unsigned shortcuts.** Recent iOS versions **no longer allow
+> importing unsigned `.shortcut` files at all** — the old *Allow Untrusted
+> Shortcuts* setting has been removed, and opening one shows *"Importing
+> unsigned shortcut files is not supported."* So the two paths that actually
+> work today are the **manual build** (below) and a **signed iCloud link**.
+> The `GET /api/ios/shortcut` endpoint still emits a valid unsigned plist (handy
+> on a Mac or older iOS), but it is no longer the recommended install path.
 
-Visit the app in Safari and tap **⬇︎ Download the iOS Shortcut**, or hit
-`GET /api/ios/shortcut` directly. The server generates a `.shortcut` whose
-"Get Contents of URL" action already points at *your* deployment's
-`/api/wallpaper/today.jpg` (the URL is built from the request host) and pipes
-it straight into **Set Wallpaper**.
+### Manual build (works on every iPhone — no import, no toggle)
 
-Because Apple only signs shortcuts through its own private service, this is an
-**unsigned** shortcut. To import one:
+This is the app's default on-page flow:
 
-1. Enable **Settings → Shortcuts → Allow Untrusted Shortcuts** (the toggle only
-   appears after you've run any one shortcut once).
-2. Open the downloaded `.shortcut` file to import it.
-3. Add a daily **Automation** (Shortcuts → Automation → Time of Day → **Run
-   Immediately**) that runs it, so it fires hands-free every morning.
+1. **Shortcuts** app → **+** to create a new shortcut.
+2. **Add Action** → **Get Contents of URL** → set it to
+   `https://<your-server>/api/wallpaper/today.jpg`
+3. **Add Action** → **Set Wallpaper** → leave it using the previous step's image;
+   turn *off* "Show Preview". Name it **Horror of the Day**, tap **Done**.
+4. **Automation** → **+** → **Time of Day** (e.g. 6:00 AM, Daily) → **Run
+   Immediately** → run your **Horror of the Day** shortcut.
 
-> The generated shortcut is a standard XML plist validated to parse as an Apple
-> property list; the action identifiers (`is.workflow.actions.downloadurl` and
-> `is.workflow.actions.wallpaper.set`) should be confirmed on a physical device
-> across iOS versions, since Apple occasionally renames actions.
+Now every morning your Home & Lock screen becomes the day's new horror.
 
-### Manual build (no untrusted-shortcuts toggle needed)
+### One-tap for people you share with (signed iCloud link)
 
-1. **Shortcuts** app → **Automation** → **+** → **Time of Day** → pick a time
-   (e.g. 6:00 AM), Daily, **Run Immediately**.
-2. Add **Get Contents of URL** → `https://<your-server>/api/wallpaper/today.jpg`
-3. Add **Set Wallpaper Photo** → use the downloaded image; turn *off* "Show
-   Preview" so it applies silently.
-
-Now every morning your Home & Lock screen becomes the day's new horror. To make
-your phone even less inviting, set the automation before your usual wake time.
+Do the manual build once on your own iPhone, then long-press the shortcut →
+**Share** → **Copy iCloud Link**. Apple signs iCloud shortcut links, so they
+import for anyone **with no settings change**. Set that link as
+`CH_SHORTCUT_ICLOUD_URL` and redeploy — the app then shows a one-tap **Add the
+Shortcut** button instead of the manual steps. Full recipe in
+**[DEPLOY.md](DEPLOY.md)**.
 
 ## Content policy
 

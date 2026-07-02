@@ -90,23 +90,24 @@ instead of the in-process scheduler, leave `CH_NIGHTLY` unset and add:
 
 ## Zero-settings install for the people you share with (recommended)
 
-By default the app serves an *unsigned* `.shortcut`, so each recipient has to
-flip **Allow Untrusted Shortcuts** once. You can remove that step entirely by
-publishing the shortcut as an **Apple-signed iCloud link** — do this once on
-your own iPhone and everyone you share with installs it with no settings change:
+Recent iOS **blocks importing unsigned `.shortcut` files entirely** (there's no
+longer an "Allow Untrusted Shortcuts" toggle). So by default the app shows a
+manual 4-step build, which always works. To give the people you share with a
+true **one-tap** install, publish the shortcut as an **Apple-signed iCloud
+link** — do this once on your own iPhone:
 
-1. On your iPhone, open your deployed site and add the shortcut once (or build
-   it by hand: *Get Contents of URL* → your `/api/wallpaper/today.jpg` →
-   *Set Wallpaper*).
-2. In the Shortcuts app, long-press the shortcut → **Share** → **Copy iCloud
-   Link**. You'll get a URL like `https://www.icloud.com/shortcuts/abc123…`.
+1. On your iPhone, build the shortcut by hand in the Shortcuts app:
+   *Get Contents of URL* → your `https://<your-app>/api/wallpaper/today.jpg` →
+   *Set Wallpaper* (turn off Show Preview). Name it **Horror of the Day**.
+2. Long-press the shortcut → **Share** → **Copy iCloud Link**. You'll get a URL
+   like `https://www.icloud.com/shortcuts/abc123…`.
 3. Set it as an env var and redeploy:
    `CH_SHORTCUT_ICLOUD_URL=https://www.icloud.com/shortcuts/abc123…`
 
-Now the **Add the Shortcut** button points at the signed link and the setup
-flow automatically drops the "Allow Untrusted Shortcuts" step. (Verify the link
-imports cleanly on a device — Apple occasionally expires iCloud shortcut links,
-in which case re-share and update the env var.)
+Now the app shows a one-tap **Add the Shortcut** button pointing at the signed
+link, and hides the manual steps. Apple-signed iCloud links import with no
+settings change. (Verify the link on a device — Apple occasionally expires
+iCloud shortcut links, in which case re-share and update the env var.)
 
 ## After it's live
 

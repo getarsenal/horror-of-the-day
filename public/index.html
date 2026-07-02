@@ -23,37 +23,51 @@
 
     <section class="setup card" id="setup">
       <h2>📱 Put it on your iPhone</h2>
-      <p class="lede">No app to install, no account to make. About a minute, then your wallpaper updates itself every morning.</p>
 
-      <ol class="steps">
-        <li>
-          <span class="step-h">Get the Shortcut</span>
-          <p class="one-tap">
-            <a id="download-shortcut" class="btn btn-lg" href="/api/ios/shortcut" download="Horror of the Day.shortcut">⬇︎ Add the Shortcut</a>
-          </p>
-          <p class="muted" id="get-note">Open this page in <strong>Safari on your iPhone</strong> and tap the button. Tap <strong>Allow</strong> if asked to download, then open the file to add it to the Shortcuts app.</p>
-          <p class="muted signed-note" id="signed-note" hidden>Open this page in <strong>Safari on your iPhone</strong> and tap the button — it adds straight to the Shortcuts app. <strong>No settings to change.</strong></p>
-        </li>
-        <li id="step-trust">
-          <span class="step-h">Allow it to run (one time)</span>
-          <p>In <strong>Settings → Shortcuts</strong>, turn on <strong>Allow Untrusted Shortcuts</strong>. Apple shows this for any shortcut not from its store — it's safe; this one only downloads today's image and sets your wallpaper.</p>
-          <p class="muted">Don't see the toggle? Run any shortcut once (even this one), then it appears.</p>
-        </li>
-        <li>
-          <span class="step-h">Make it automatic</span>
-          <p>In <strong>Shortcuts → Automation → +</strong>, choose <strong>Time of Day</strong> (e.g. 6:00 AM, Daily), pick <strong>Run Immediately</strong>, and set it to run <strong>“Horror of the Day.”</strong> Now every morning your Home &amp; Lock screen becomes the new horror — hands-free.</p>
-        </li>
-      </ol>
-
-      <details class="manual">
-        <summary>Rather build it by hand? (skips the “untrusted” toggle)</summary>
-        <ol>
-          <li>Open <strong>Shortcuts</strong> → <strong>Automation</strong> → <strong>+</strong> → <strong>Time of Day</strong>, pick a time (e.g. 6:00 AM), Daily, <em>Run Immediately</em>.</li>
-          <li>Add action <strong>Get Contents of URL</strong> → paste this URL: <code id="wallpaper-url" class="wallpaper-url"></code> <button id="copy-url" class="btn btn-ghost btn-sm">Copy</button></li>
-          <li>Add action <strong>Set Wallpaper Photo</strong> → use the downloaded image; turn off “Show Preview”.</li>
-          <li>Done — same result, no toggle needed.</li>
+      <!-- One-tap install (shown only when the owner has published a signed
+           iCloud shortcut link via CH_SHORTCUT_ICLOUD_URL). -->
+      <div id="setup-oneTap" hidden>
+        <p class="lede">No app, no account, no settings — about a minute.</p>
+        <ol class="steps">
+          <li>
+            <span class="step-h">Add the Shortcut</span>
+            <p class="one-tap">
+              <a id="download-shortcut" class="btn btn-lg" href="#">⬇︎ Add the Shortcut</a>
+            </p>
+            <p class="muted">Open this page in <strong>Safari on iPhone</strong> and tap the button — it adds straight to the Shortcuts app, no settings to change.</p>
+          </li>
+          <li>
+            <span class="step-h">Make it automatic</span>
+            <p>In <strong>Shortcuts → Automation → +</strong>, choose <strong>Time of Day</strong> (e.g. 6:00 AM, Daily), pick <strong>Run Immediately</strong>, and run <strong>“Horror of the Day.”</strong> Every morning your Home &amp; Lock screen becomes the new horror — hands-free.</p>
+          </li>
         </ol>
-      </details>
+      </div>
+
+      <!-- Default: build it by hand. Works on every iPhone — no import, no
+           toggle. (Recent iOS blocks importing unsigned shortcut files.) -->
+      <div id="setup-manual">
+        <p class="lede">Two minutes in the Shortcuts app — no account, nothing to install.</p>
+        <ol class="steps">
+          <li>
+            <span class="step-h">New shortcut</span>
+            <p>Open the <strong>Shortcuts</strong> app → tap <strong>+</strong> (top-right) to start a new shortcut.</p>
+          </li>
+          <li>
+            <span class="step-h">Fetch today’s horror</span>
+            <p>Tap <strong>Add Action</strong>, search <strong>Get Contents of URL</strong>, add it, and set the URL to:</p>
+            <p><code id="wallpaper-url" class="wallpaper-url"></code> <button id="copy-url" class="btn btn-ghost btn-sm">Copy</button></p>
+          </li>
+          <li>
+            <span class="step-h">Set it as your wallpaper</span>
+            <p>Tap <strong>Add Action</strong> again, search <strong>Set Wallpaper</strong>, and add it. Leave it using the previous step’s image and turn off <strong>Show Preview</strong>. Name the shortcut <strong>Horror of the Day</strong> and tap <strong>Done</strong>.</p>
+          </li>
+          <li>
+            <span class="step-h">Make it automatic</span>
+            <p>Go to <strong>Automation → +</strong> → <strong>Time of Day</strong> (e.g. 6:00 AM, Daily) → <strong>Run Immediately</strong>, and run your <strong>Horror of the Day</strong> shortcut. Done — hands-free every morning.</p>
+          </li>
+        </ol>
+        <p class="muted owner-note">🛠️ <strong>Run this site?</strong> Give friends a true one-tap install: build the shortcut once, then <strong>Share → Copy iCloud Link</strong> and set it as <code>CH_SHORTCUT_ICLOUD_URL</code> (see the deploy guide). Apple-signed iCloud links import with no settings.</p>
+      </div>
     </section>
 
     <section class="vote card">
