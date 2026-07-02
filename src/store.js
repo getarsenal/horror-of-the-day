@@ -177,6 +177,103 @@ export function recentSelections(limit = 30) {
     .all(limit);
 }
 
+// --- Metrics ---------------------------------------------------------------
+
+/** Increment a daily counter (best-effort analytics; no PII). */
+export function recordMetric(kind, day = today()) {
+  db.prepare(
+    `INSERT INTO metrics (day, kind, count) VALUES (?, ?, 1)
+     ON CONFLICT (day, kind) DO UPDATE SET count = count + 1`
+  ).run(day, kind);
+}
+
+export function metricTotal(kind) {
+  return db.prepare('SELECT COALESCE(SUM(count), 0) AS n FROM metrics WHERE kind = ?').get(kind).n;
+}
+
+/** Last `days` days of a metric as [{ day, count }], oldest→newest, zero-filled. */
+export function metricSeries(kind, days = 14, end = today()) {
+  const rows = db
+    .prepare(
+      `SELECT day, count FROM metrics
+        WHERE kind = ? AND day > date(?, '-' || ? || ' days') AND day <= ?`
+    )
+    .all(kind, end, days, end);
+  return fillDays(rows, days, end);
+}
+
+/** Votes cast per day (by votes.created_at) over the last `days`. */
+export function votesPerDay(days = 14, end = today()) {
+  const rows = db
+    .prepare(
+      `SELECT date(created_at) AS day, COUNT(*) AS count FROM votes
+        WHERE date(created_at) > date(?, '-' || ? || ' days') AND date(created_at) <= ?
+        GROUP BY date(created_at)`
+    )
+    .all(end, days, end);
+  return fillDays(rows, days, end);
+}
+
+/** Images submitted per day over the last `days`. */
+export function submissionsPerDay(days = 14, end = today()) {
+  const rows = db
+    .prepare(
+      `SELECT date(created_at) AS day, COUNT(*) AS count FROM images
+        WHERE date(created_at) > date(?, '-' || ? || ' days') AND date(created_at) <= ?
+        GROUP BY date(created_at)`
+    )
+    .all(end, days, end);
+  return fillDays(rows, days, end);
+}
+
+// Turn sparse [{day,count}] rows into a dense, zero-filled series ending at `end`.
+function fillDays(rows, days, end) {
+  const byDay = new Map(rows.map((r) => [r.day, r.count]));
+  const out = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = db.prepare("SELECT date(?, '-' || ? || ' days') AS day").get(end, i).day;
+    out.push({ day: d, count: byDay.get(d) ?? 0 });
+  }
+  return out;
+}
+
+// --- Manual daily-selection control (admin overrides) ----------------------
+
+/** Read the selection for a day without creating one (unlike horrorOfTheDay). */
+export function selectionFor(day = today()) {
+  return db
+    .prepare(
+      `SELECT i.*, d.score_at_pick AS score, d.day AS day
+         FROM daily_selections d JOIN images i ON i.id = d.image_id
+        WHERE d.day = ?`
+    )
+    .get(day);
+}
+
+/**
+ * Force a specific image as the Horror for `day` (admin override), or clear the
+ * selection (imageId null) so it auto-picks again. The image must be approved.
+ */
+export function setSelection(day, imageId) {
+  if (imageId == null) {
+    db.prepare('DELETE FROM daily_selections WHERE day = ?').run(day);
+    return { day, cleared: true };
+  }
+  const img = getImage(imageId);
+  if (!img) throw new Error('image not found');
+  if (img.status !== 'approved') throw new Error('image must be approved before featuring');
+  db.prepare(
+    `INSERT INTO daily_selections (day, image_id, score_at_pick) VALUES (?, ?, ?)
+     ON CONFLICT (day) DO UPDATE SET image_id = excluded.image_id, score_at_pick = excluded.score_at_pick`
+  ).run(day, imageId, scoreFor(imageId));
+  return { day, image_id: imageId };
+}
+
+/** Clear all votes for an image (admin). Returns votes removed. */
+export function resetVotes(imageId) {
+  return db.prepare('DELETE FROM votes WHERE image_id = ?').run(imageId).changes;
+}
+
 export function stats() {
   const c = (sql, ...a) => db.prepare(sql).get(...a).n;
   return {

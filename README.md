@@ -124,12 +124,22 @@ Public:
 
 Admin (require header `x-admin-key: <CH_ADMIN_KEY>`):
 
-| Method | Path                            | Description                          |
-| ------ | ------------------------------- | ------------------------------------ |
-| GET    | `/api/moderation/pending`       | List images awaiting review          |
-| POST   | `/api/moderation/:id/approve`   | Make an image votable                 |
-| POST   | `/api/moderation/:id/reject`    | Hide an image                         |
-| POST   | `/api/moderation/import`        | Import from Wikimedia Commons         |
+| Method | Path                              | Description                          |
+| ------ | --------------------------------- | ------------------------------------ |
+| GET    | `/api/moderation/overview`        | Dashboard data: picks, leaderboard, counts, analytics trends |
+| GET    | `/api/moderation/pending`         | List images awaiting review          |
+| POST   | `/api/moderation/:id/approve`     | Make an image votable                 |
+| POST   | `/api/moderation/:id/reject`      | Hide an image                         |
+| POST   | `/api/moderation/select`          | Set/clear today's or tomorrow's featured image |
+| POST   | `/api/moderation/:id/reset-votes` | Wipe an image's votes                 |
+| POST   | `/api/moderation/import`          | Import from Wikimedia Commons         |
+| POST   | `/api/moderation/backfill-dimensions` | Measure images missing sizes     |
+| POST   | `/api/moderation/test-notify`     | Send a test ntfy push                 |
+
+The **Control Room** at `/admin.html` is the UI over all of these: at-a-glance
+counts (page views, wallpaper fetches = active phones, votes), today's &
+tomorrow's picks with phone previews and one-click override, trend charts, the
+leaderboard (set-as-today/tomorrow, reset votes), and the review queue.
 
 ## iOS auto-wallpaper (the deterrent)
 

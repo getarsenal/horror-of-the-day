@@ -8,7 +8,7 @@ import { imageSize } from 'image-size';
 import * as store from './store.js';
 import { fetchCandidates, HORROR_CATEGORIES } from './wikimedia.js';
 import { buildWallpaperShortcut } from './shortcut.js';
-import { runNightly, scheduleNightly, backfillDimensions } from './nightly.js';
+import { runNightly, scheduleNightly, backfillDimensions, tomorrow } from './nightly.js';
 import { isPhoneFriendly } from './aspect.js';
 import { notifySubmissionAsync, sendPush, ntfyConfig } from './notify.js';
 import { runSeed } from './seed.js';
@@ -22,6 +22,7 @@ app.use(express.json({ limit: '64kb' }));
 // (og:image etc.) resolve for iMessage/social regardless of the deployed host.
 const INDEX_HTML = readFileSync(`${__dirname}/../public/index.html`, 'utf8');
 app.get(['/', '/index.html'], (req, res) => {
+  try { store.recordMetric('page_view'); } catch { /* analytics are best-effort */ }
   const origin = `${req.protocol}://${req.get('host')}`;
   res.type('html').send(INDEX_HTML.replaceAll('%%ORIGIN%%', origin));
 });
@@ -99,6 +100,7 @@ app.get('/api/config', (req, res) => {
 // The endpoint an iOS Shortcut / Android job hits to grab today's wallpaper.
 // 302-redirects straight to the image bytes so "Get Contents of URL" just works.
 app.get('/api/wallpaper/today.jpg', (req, res) => {
+  try { store.recordMetric('wallpaper_fetch'); } catch { /* best-effort */ }
   const horror = store.horrorOfTheDay();
   if (!horror) return res.status(404).json({ error: 'no approved images yet' });
   // Uploaded images are stored as site-relative URLs; make them absolute so the
@@ -216,6 +218,52 @@ app.post('/api/moderation/:id/approve', requireAdmin, (req, res) => {
 app.post('/api/moderation/:id/reject', requireAdmin, (req, res) => {
   const ok = store.setStatus(Number(req.params.id), 'rejected');
   res.status(ok ? 200 : 404).json({ ok });
+});
+
+// Full dashboard snapshot: today/tomorrow picks, leaderboard, counts, and
+// analytics trends over the last `days` (default 14).
+app.get('/api/moderation/overview', requireAdmin, (req, res) => {
+  const days = Math.min(60, Math.max(7, Number(req.query.days) || 14));
+  const todayDay = store.today();
+  const tmrwDay = tomorrow();
+  res.json({
+    today: { day: todayDay, horror: toPublic(store.selectionFor(todayDay)) },
+    tomorrow: { day: tmrwDay, horror: toPublic(store.selectionFor(tmrwDay)) },
+    counts: store.stats(),
+    metrics: {
+      pageViewsTotal: store.metricTotal('page_view'),
+      wallpaperFetchesTotal: store.metricTotal('wallpaper_fetch'),
+    },
+    leaderboard: store.leaderboard(100).map(toPublic),
+    trends: {
+      pageViews: store.metricSeries('page_view', days),
+      wallpaperFetches: store.metricSeries('wallpaper_fetch', days),
+      votes: store.votesPerDay(days),
+      submissions: store.submissionsPerDay(days),
+    },
+  });
+});
+
+// Override (or clear) which image is featured on a given day.
+app.post('/api/moderation/select', requireAdmin, (req, res) => {
+  const { day, image_id } = req.body ?? {};
+  let target;
+  if (!day || day === 'today') target = store.today();
+  else if (day === 'tomorrow') target = tomorrow();
+  else if (/^\d{4}-\d{2}-\d{2}$/.test(day)) target = day;
+  else return res.status(400).json({ error: 'day must be "today", "tomorrow", or YYYY-MM-DD' });
+  try {
+    const result = store.setSelection(target, image_id ?? null);
+    res.json({ ...result, horror: toPublic(store.selectionFor(target)) });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Clear all votes for an image.
+app.post('/api/moderation/:id/reset-votes', requireAdmin, (req, res) => {
+  const removed = store.resetVotes(Number(req.params.id));
+  res.json({ ok: true, removed });
 });
 
 // Pull fresh candidates from Wikimedia Commons into the pending queue.

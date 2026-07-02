@@ -3,40 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Horror of the Day — Moderation</title>
+  <title>Horror of the Day — Dashboard</title>
   <link rel="icon" href="/icon.png" />
   <link rel="apple-touch-icon" href="/icon.png" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <header class="site-header">
-    <h1>🛡️ Moderation</h1>
-    <p class="tagline">Review submissions &amp; imports. Nothing here is public until you <strong>Approve</strong> it.</p>
+    <h1>🛡️ Control Room</h1>
+    <p class="tagline">Everything about Horror of the Day — analytics, the daily picks, voting, and the review queue.</p>
   </header>
 
   <main>
     <section class="card">
       <h2>Admin key</h2>
-      <p class="muted">Your <code>CH_ADMIN_KEY</code>. Stored only in this browser.</p>
+      <p class="muted">Your <code>CH_ADMIN_KEY</code>, stored only in this browser.</p>
       <div class="key-row">
         <input id="admin-key" type="password" placeholder="paste admin key" autocomplete="off" />
         <button id="save-key" class="btn">Save &amp; load</button>
+        <button id="refresh-all" class="btn btn-ghost">Refresh</button>
       </div>
       <p id="key-msg" class="msg"></p>
     </section>
 
-    <section class="card">
-      <div class="toolbar">
-        <h2>Pending review <span id="pending-count" class="muted"></span></h2>
-        <div class="tool-btns">
-          <button id="refresh" class="btn btn-ghost btn-sm">Refresh</button>
-          <button id="import" class="btn btn-ghost btn-sm">Import from Commons</button>
+    <div id="dashboard" hidden>
+      <section class="card">
+        <h2>At a glance</h2>
+        <div id="tiles" class="tiles"></div>
+      </section>
+
+      <section class="card">
+        <h2>Today &amp; tomorrow</h2>
+        <div id="features" class="features"></div>
+      </section>
+
+      <section class="card">
+        <h2>Trends <span class="muted">· last 14 days</span></h2>
+        <div id="trends" class="trends"></div>
+      </section>
+
+      <section class="card">
+        <div class="toolbar">
+          <h2>Leaderboard <span id="lb-count" class="muted"></span></h2>
         </div>
-      </div>
-      <div id="queue" class="grid">
-        <p class="muted">Enter your admin key above to load the queue.</p>
-      </div>
-    </section>
+        <p class="muted small">Set any approved image as today's or tomorrow's horror, or wipe its votes.</p>
+        <div id="leaderboard" class="lb"></div>
+      </section>
+
+      <section class="card">
+        <div class="toolbar">
+          <h2>Pending review <span id="pending-count" class="muted"></span></h2>
+          <div class="tool-btns">
+            <button id="import" class="btn btn-ghost btn-sm">Import from Commons</button>
+            <button id="test-notify" class="btn btn-ghost btn-sm">Test push</button>
+          </div>
+        </div>
+        <div id="queue" class="grid"></div>
+      </section>
+    </div>
   </main>
 
   <script src="/admin.js"></script>

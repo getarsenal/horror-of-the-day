@@ -48,6 +48,14 @@ db.exec(`
     created_at   TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  -- Lightweight daily counters (page views, wallpaper fetches, …). No PII.
+  CREATE TABLE IF NOT EXISTS metrics (
+    day    TEXT NOT NULL,   -- YYYY-MM-DD
+    kind   TEXT NOT NULL,   -- 'page_view' | 'wallpaper_fetch' | …
+    count  INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (day, kind)
+  );
+
   -- Bytes for user-uploaded images, keyed by content hash (dedupes identical
   -- uploads). URL-based images don't have a row here.
   CREATE TABLE IF NOT EXISTS image_files (

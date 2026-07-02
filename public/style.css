@@ -187,6 +187,34 @@ input[type="file"] { color: var(--muted); font-size: 0.9rem; }
 .btn-approve { background: var(--accent); }
 .btn-reject { color: #e0546b; border: 1px solid #e0546b; }
 
+/* --- Dashboard --- */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
+.tile-stat { background: #14111a; border: 1px solid var(--border); border-radius: 10px; padding: 0.8rem; }
+.tile-icon { font-size: 1.2rem; }
+.tile-val { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+.tile-label { font-size: 0.8rem; color: var(--muted); }
+
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; }
+.feature-h { font-weight: 600; margin-bottom: 0.5rem; }
+.feature-t { margin-top: 0.4rem; font-size: 0.9rem; }
+.phone { aspect-ratio: 9 / 19.5; max-width: 150px; border: 3px solid #2c2733; border-radius: 20px; overflow: hidden; background: #000; }
+.phone img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.phone.empty { display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 0.85rem; padding: 0.5rem; }
+
+.trends { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+.chart-h { font-size: 0.85rem; margin-bottom: 0.4rem; }
+.bars { display: flex; align-items: flex-end; gap: 2px; height: 64px; }
+.bars .bar { flex: 1; min-height: 2px; border-radius: 2px 2px 0 0; opacity: 0.85; }
+
+.lb { display: flex; flex-direction: column; gap: 0.5rem; }
+.lb-row { display: flex; align-items: center; gap: 0.6rem; background: #14111a; border: 1px solid var(--border); border-radius: 10px; padding: 0.5rem; flex-wrap: wrap; }
+.lb-rank { width: 1.5rem; text-align: center; font-weight: 700; color: var(--muted); }
+.lb-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; background: #000; }
+.lb-main { flex: 1; min-width: 140px; }
+.lb-title { font-weight: 600; font-size: 0.9rem; }
+.lb-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.btn.danger { color: #e0546b; border: 1px solid #e0546b; }
+
 .msg { min-height: 1.2em; font-size: 0.85rem; }
 .msg.ok { color: var(--accent); }
 .msg.err { color: #e0546b; }
