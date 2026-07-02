@@ -61,6 +61,7 @@ npm run import:wikimedia -- 5   # ~5 images per category
 | `CH_NIGHTLY`     | *(off)*          | `1` runs the nightly job in-process            |
 | `CH_SEED_ON_START` | *(on)*         | `0` disables auto-seeding an empty catalog     |
 | `CH_MAX_ASPECT`  | `1.0`            | Max width/height for a "phone-friendly" image  |
+| `CH_ALLOW_SUBMISSIONS` | *(on)*     | `0` closes public submissions entirely         |
 
 See **[DEPLOY.md](DEPLOY.md)** for the full env-var list. (The `CH_` prefix is a
 legacy short-name from the project's original repo; it's internal only — nobody
@@ -153,12 +154,22 @@ import for anyone **with no settings change**. Set that link as
 Shortcut** button instead of the manual steps. Full recipe in
 **[DEPLOY.md](DEPLOY.md)**.
 
-## Content policy
+## Content policy & moderation
 
 SFW only: disturbing, gross, unsettling — **nothing sexual or graphically
-violent**. Imported and submitted images always pass through the human
-moderation queue before they can be voted on or featured. Images from Wikimedia
-Commons carry their source link and credit/license.
+violent**. This is enforced structurally: **every** imported or submitted image
+lands in a `pending` queue and is invisible to the public — it cannot be voted
+on or become a wallpaper — until a human approves it. So nothing a stranger
+submits can ever reach anyone's phone without your say-so.
+
+**Moderation console:** open **`/admin.html`** on your deployment, paste your
+`CH_ADMIN_KEY`, and you get the pending queue with a preview of each image and
+**Approve / Reject** buttons. Reject anything off-policy; it's then hidden for
+good. You can also trigger a Wikimedia import from there.
+
+Prefer not to accept public submissions at all? Set `CH_ALLOW_SUBMISSIONS=0` —
+the submit form disappears and the endpoint refuses posts, so the only content
+is what you import and approve yourself.
 
 ## Project layout
 

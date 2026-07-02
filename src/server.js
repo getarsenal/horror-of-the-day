@@ -15,6 +15,8 @@ app.use(express.json({ limit: '64kb' }));
 app.use(express.static(`${__dirname}/../public`));
 
 const ADMIN_KEY = process.env.CH_ADMIN_KEY || 'dev-admin-key';
+// Public submissions are on by default; set CH_ALLOW_SUBMISSIONS=0 to close them.
+const SUBMISSIONS_ENABLED = process.env.CH_ALLOW_SUBMISSIONS !== '0';
 
 function requireAdmin(req, res, next) {
   const key = req.get('x-admin-key') || req.query.key;
@@ -68,6 +70,7 @@ app.get('/api/config', (req, res) => {
   res.json({
     iosShortcutUrl: iCloud || '/api/ios/shortcut',
     iosShortcutSigned: Boolean(iCloud),
+    submissionsEnabled: SUBMISSIONS_ENABLED,
   });
 });
 
@@ -93,6 +96,9 @@ app.get('/api/ios/shortcut', (req, res) => {
 // --- Public write endpoints ------------------------------------------------
 
 app.post('/api/submit', (req, res) => {
+  if (!SUBMISSIONS_ENABLED) {
+    return res.status(403).json({ error: 'public submissions are currently closed' });
+  }
   const { title, image_url, source_url, credit, submitted_by } = req.body ?? {};
   if (!title || !image_url) {
     return res.status(400).json({ error: 'title and image_url are required' });

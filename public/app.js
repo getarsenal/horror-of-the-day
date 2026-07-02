@@ -150,6 +150,10 @@ $('#submit-form').addEventListener('submit', async (e) => {
 async function loadSetupConfig() {
   try {
     const cfg = await api('/api/config');
+    if (cfg.submissionsEnabled === false) {
+      const submit = $('#submit-section');
+      if (submit) submit.hidden = true;
+    }
     if (cfg.iosShortcutSigned && cfg.iosShortcutUrl) {
       const link = $('#download-shortcut');
       if (link) link.setAttribute('href', cfg.iosShortcutUrl);

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Horror of the Day — Moderation</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>🛡️ Moderation</h1>
+    <p class="tagline">Review submissions &amp; imports. Nothing here is public until you <strong>Approve</strong> it.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Admin key</h2>
+      <p class="muted">Your <code>CH_ADMIN_KEY</code>. Stored only in this browser.</p>
+      <div class="key-row">
+        <input id="admin-key" type="password" placeholder="paste admin key" autocomplete="off" />
+        <button id="save-key" class="btn">Save &amp; load</button>
+      </div>
+      <p id="key-msg" class="msg"></p>
+    </section>
+
+    <section class="card">
+      <div class="toolbar">
+        <h2>Pending review <span id="pending-count" class="muted"></span></h2>
+        <div class="tool-btns">
+          <button id="refresh" class="btn btn-ghost btn-sm">Refresh</button>
+          <button id="import" class="btn btn-ghost btn-sm">Import from Commons</button>
+        </div>
+      </div>
+      <div id="queue" class="grid">
+        <p class="muted">Enter your admin key above to load the queue.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/admin.js"></script>
+</body>
+</html>
