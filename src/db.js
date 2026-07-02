@@ -48,6 +48,15 @@ db.exec(`
     created_at   TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
+  -- Bytes for user-uploaded images, keyed by content hash (dedupes identical
+  -- uploads). URL-based images don't have a row here.
+  CREATE TABLE IF NOT EXISTS image_files (
+    hash        TEXT PRIMARY KEY,          -- sha256 of the bytes
+    mime        TEXT NOT NULL,
+    data        BLOB NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE INDEX IF NOT EXISTS idx_votes_image ON votes(image_id);
   CREATE INDEX IF NOT EXISTS idx_images_status ON images(status);
 `);

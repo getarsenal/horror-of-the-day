@@ -1,6 +1,10 @@
 import express from 'express';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import multer from 'multer';
+import { imageSize } from 'image-size';
 import * as store from './store.js';
 import { fetchCandidates, HORROR_CATEGORIES } from './wikimedia.js';
 import { buildWallpaperShortcut } from './shortcut.js';
@@ -12,11 +16,28 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.set('trust proxy', true); // honor X-Forwarded-Proto/Host so generated URLs are correct behind a proxy
 app.use(express.json({ limit: '64kb' }));
+
+// Serve index.html with the absolute origin injected, so link-preview meta tags
+// (og:image etc.) resolve for iMessage/social regardless of the deployed host.
+const INDEX_HTML = readFileSync(`${__dirname}/../public/index.html`, 'utf8');
+app.get(['/', '/index.html'], (req, res) => {
+  const origin = `${req.protocol}://${req.get('host')}`;
+  res.type('html').send(INDEX_HTML.replaceAll('%%ORIGIN%%', origin));
+});
+
 app.use(express.static(`${__dirname}/../public`));
 
 const ADMIN_KEY = process.env.CH_ADMIN_KEY || 'dev-admin-key';
 // Public submissions are on by default; set CH_ALLOW_SUBMISSIONS=0 to close them.
 const SUBMISSIONS_ENABLED = process.env.CH_ALLOW_SUBMISSIONS !== '0';
+
+// Accept image uploads up to 10MB, held in memory (then stored in the DB).
+const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, Boolean(MIME_EXT[file.mimetype])),
+});
 
 function requireAdmin(req, res, next) {
   const key = req.get('x-admin-key') || req.query.key;
@@ -79,7 +100,12 @@ app.get('/api/config', (req, res) => {
 app.get('/api/wallpaper/today.jpg', (req, res) => {
   const horror = store.horrorOfTheDay();
   if (!horror) return res.status(404).json({ error: 'no approved images yet' });
-  res.redirect(302, horror.image_url);
+  // Uploaded images are stored as site-relative URLs; make them absolute so the
+  // iOS Shortcut's "Get Contents of URL" can fetch them.
+  const url = horror.image_url.startsWith('/')
+    ? `${req.protocol}://${req.get('host')}${horror.image_url}`
+    : horror.image_url;
+  res.redirect(302, url);
 });
 
 // One-tap iOS setup: download a Shortcut that fetches the daily wallpaper URL
@@ -95,26 +121,47 @@ app.get('/api/ios/shortcut', (req, res) => {
 
 // --- Public write endpoints ------------------------------------------------
 
-app.post('/api/submit', (req, res) => {
+// Accepts either an uploaded image file (multipart, field "image") or an
+// https image URL (JSON or form field). Uploads are stored in the DB and served
+// from /api/images/<hash>.<ext>.
+app.post('/api/submit', upload.single('image'), (req, res) => {
   if (!SUBMISSIONS_ENABLED) {
     return res.status(403).json({ error: 'public submissions are currently closed' });
   }
-  const { title, image_url, source_url, credit, submitted_by } = req.body ?? {};
-  if (!title || !image_url) {
-    return res.status(400).json({ error: 'title and image_url are required' });
-  }
-  if (!/^https:\/\//i.test(image_url)) {
+  const body = req.body ?? {};
+  const title = body.title?.trim();
+  const source_url = body.source_url || undefined;
+  const credit = body.credit || undefined;
+  const submitted_by = body.submitted_by || undefined;
+
+  if (!title) return res.status(400).json({ error: 'title is required' });
+
+  let image_url = body.image_url?.trim();
+  let width = null;
+  let height = null;
+
+  if (req.file) {
+    // Uploaded file: hash → dedupe, measure, store bytes, reference by URL.
+    const ext = MIME_EXT[req.file.mimetype];
+    if (!ext) return res.status(400).json({ error: 'unsupported image type (use JPEG, PNG, or WebP)' });
+    const hash = createHash('sha256').update(req.file.buffer).digest('hex');
+    try {
+      const dim = imageSize(req.file.buffer);
+      width = dim.width ?? null;
+      height = dim.height ?? null;
+    } catch {
+      /* couldn't measure — leave dimensions unknown */
+    }
+    store.saveImageFile(hash, req.file.mimetype, req.file.buffer);
+    image_url = `/api/images/${hash}.${ext}`;
+  } else if (!image_url) {
+    return res.status(400).json({ error: 'attach an image file or provide an image_url' });
+  } else if (!/^https:\/\//i.test(image_url)) {
     return res.status(400).json({ error: 'image_url must be an https URL' });
   }
+
   try {
-    const result = store.addImage({
-      title,
-      image_url,
-      source_url,
-      credit,
-      submitted_by,
-      status: 'pending',
-    });
+    const result = store.addImage({ title, image_url, source_url, credit, submitted_by, status: 'pending', width, height });
     res.status(result.created ? 201 : 200).json({
       ...result,
       message: result.created
@@ -124,6 +171,16 @@ app.post('/api/submit', (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+
+// Serve an uploaded image's bytes by content hash.
+app.get('/api/images/:file', (req, res) => {
+  const hash = String(req.params.file).replace(/\.[a-z0-9]+$/i, '');
+  const file = store.getImageFile(hash);
+  if (!file) return res.status(404).json({ error: 'image not found' });
+  res.set('Content-Type', file.mime);
+  res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  res.send(file.data);
 });
 
 app.post('/api/candidates/:id/vote', (req, res) => {
@@ -199,6 +256,15 @@ app.post('/api/moderation/backfill-dimensions', requireAdmin, async (req, res) =
 });
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
+
+// Turn multer upload errors (e.g. file too large) into clean JSON responses.
+app.use((err, req, res, next) => {
+  if (err && err.name === 'MulterError') {
+    const msg = err.code === 'LIMIT_FILE_SIZE' ? 'image too large (max 10MB)' : err.message;
+    return res.status(400).json({ error: msg });
+  }
+  next(err);
+});
 
 const PORT = process.env.PORT || 3000;
 

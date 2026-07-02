@@ -52,6 +52,17 @@ test('fileTitleFromUrl derives a normalized Commons title from stored URLs', () 
   assert.equal(wikimedia.fileTitleFromUrl('https://example.com/not-commons.jpg'), null);
 });
 
+test('uploaded image bytes store and fetch by content hash', () => {
+  const buf = Buffer.from('\x89PNG fake bytes');
+  store.saveImageFile('deadbeef', 'image/png', buf);
+  const f = store.getImageFile('deadbeef');
+  assert.equal(f.mime, 'image/png');
+  assert.deepEqual(Buffer.from(f.data), buf);
+  assert.equal(store.getImageFile('nope'), null);
+  // Idempotent — a second save of the same hash doesn't throw.
+  store.saveImageFile('deadbeef', 'image/png', buf);
+});
+
 test('backfillDimensions measures unmeasured images via the injected lookup', async () => {
   // Two images with no dimensions yet.
   const a = store.addImage({ title: 'A', image_url: 'https://commons.wikimedia.org/wiki/Special:FilePath/A_thing.jpg', status: 'approved' });

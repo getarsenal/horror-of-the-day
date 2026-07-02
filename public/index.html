@@ -4,13 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Horror of the Day</title>
-  <meta name="description" content="A community-voted, deliberately disgusting daily wallpaper to make you not want to be on your phone." />
+  <meta name="description" content="A community-voted, deliberately revolting daily wallpaper. Get off that phone." />
+
+  <!-- App icon (Home Screen) -->
+  <link rel="icon" href="/icon.png" />
+  <link rel="apple-touch-icon" href="/icon.png" />
+  <meta name="apple-mobile-web-app-title" content="Horror of the Day" />
+  <meta name="application-name" content="Horror of the Day" />
+  <meta name="theme-color" content="#0d0b10" />
+
+  <!-- Link preview (iMessage, social) -->
+  <meta property="og:title" content="Horror of the Day" />
+  <meta property="og:description" content="A community-voted, deliberately revolting daily wallpaper. Get off that phone." />
+  <meta property="og:image" content="%%ORIGIN%%/icon.png" />
+  <meta property="og:url" content="%%ORIGIN%%/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Horror of the Day" />
+  <meta name="twitter:description" content="A community-voted, deliberately revolting daily wallpaper. Get off that phone." />
+  <meta name="twitter:image" content="%%ORIGIN%%/icon.png" />
+
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <header class="site-header">
-    <h1>🫣 Horror of the Day</h1>
-    <p class="tagline">Voted by the community, set as your wallpaper — so you actively avoid your phone.</p>
+    <img class="site-logo" src="/logo.jpg" alt="Horror of the Day — Get off that phone" />
+    <h1 class="visually-hidden">Horror of the Day</h1>
   </header>
 
   <main>
@@ -83,7 +102,9 @@
       <p class="muted">SFW only — disturbing, gross, unsettling, but nothing sexual or graphically violent. Everything is human-reviewed before it can be voted on.</p>
       <form id="submit-form">
         <label>Title <input name="title" required maxlength="120" placeholder="e.g. Botfly larva under the skin" /></label>
-        <label>Image URL (https) <input name="image_url" type="url" required placeholder="https://…/image.jpg" /></label>
+        <label>Upload an image <input name="image" id="submit-file" type="file" accept="image/jpeg,image/png,image/webp" /></label>
+        <p class="muted small or-sep">— or paste an image link —</p>
+        <label>Image URL (https) <input name="image_url" id="submit-url" type="url" placeholder="https://…/image.jpg" /></label>
         <label>Source URL (optional) <input name="source_url" type="url" placeholder="https://commons.wikimedia.org/…" /></label>
         <label>Credit (optional) <input name="credit" maxlength="200" placeholder="Photographer · License" /></label>
         <button class="btn" type="submit">Submit for review</button>

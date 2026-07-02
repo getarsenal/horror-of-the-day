@@ -125,15 +125,40 @@ $('#submit-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const msg = $('#submit-msg');
   const form = e.target;
-  const body = {
-    title: form.title.value.trim(),
-    image_url: form.image_url.value.trim(),
-    source_url: form.source_url.value.trim() || undefined,
-    credit: form.credit.value.trim() || undefined,
-    submitted_by: voterToken,
-  };
+  const file = form.image.files[0];
+  const url = form.image_url.value.trim();
+
+  if (!file && !url) {
+    msg.textContent = 'Attach an image file or paste an image link.';
+    msg.className = 'msg err';
+    return;
+  }
+
   try {
-    const res = await api('/api/submit', { method: 'POST', body: JSON.stringify(body) });
+    let res;
+    if (file) {
+      // Multipart upload — let the browser set the Content-Type boundary.
+      const fd = new FormData();
+      fd.append('title', form.title.value.trim());
+      fd.append('image', file);
+      if (form.source_url.value.trim()) fd.append('source_url', form.source_url.value.trim());
+      if (form.credit.value.trim()) fd.append('credit', form.credit.value.trim());
+      fd.append('submitted_by', voterToken);
+      const r = await fetch('/api/submit', { method: 'POST', body: fd });
+      res = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(res.error || `Request failed (${r.status})`);
+    } else {
+      res = await api('/api/submit', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: form.title.value.trim(),
+          image_url: url,
+          source_url: form.source_url.value.trim() || undefined,
+          credit: form.credit.value.trim() || undefined,
+          submitted_by: voterToken,
+        }),
+      });
+    }
     msg.textContent = res.message;
     msg.className = 'msg ok';
     form.reset();

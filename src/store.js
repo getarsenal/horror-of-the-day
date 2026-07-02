@@ -47,6 +47,17 @@ export function imagesMissingDimensions(limit = 100) {
     .all(limit);
 }
 
+/** Store uploaded image bytes, keyed by content hash (idempotent). */
+export function saveImageFile(hash, mime, data) {
+  db.prepare('INSERT OR IGNORE INTO image_files (hash, mime, data) VALUES (?, ?, ?)').run(hash, mime, data);
+  return hash;
+}
+
+/** Fetch stored bytes for an uploaded image by hash, or null. */
+export function getImageFile(hash) {
+  return db.prepare('SELECT mime, data FROM image_files WHERE hash = ?').get(hash) ?? null;
+}
+
 export function setStatus(id, status) {
   const info = db.prepare('UPDATE images SET status = ? WHERE id = ?').run(status, id);
   return info.changes > 0;

@@ -109,8 +109,16 @@ Public:
 | GET    | `/api/candidates`             | Approved images, ranked by net vote score     |
 | GET    | `/api/history`                | Past days' horrors                            |
 | GET    | `/api/stats`                  | Catalog counts                                |
-| POST   | `/api/submit`                 | Submit `{title, image_url, ...}` (→ pending)  |
+| GET    | `/api/images/:hash.ext`       | Bytes of an uploaded image                     |
+| POST   | `/api/submit`                 | Submit an image (→ pending) — see below        |
 | POST   | `/api/candidates/:id/vote`    | `{voter_token, value: 1 or -1}`               |
+
+`POST /api/submit` accepts **either** an uploaded file or an image URL:
+- **File upload** — `multipart/form-data` with an `image` field (JPEG/PNG/WebP,
+  ≤10MB) plus `title`. Bytes are stored in the DB and served from
+  `/api/images/<hash>.<ext>`; dimensions are measured so phone-fit selection
+  applies.
+- **URL** — JSON `{ title, image_url, ... }` with an `https` image URL.
 
 Admin (require header `x-admin-key: <CH_ADMIN_KEY>`):
 
