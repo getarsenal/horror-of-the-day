@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import * as store from './store.js';
 import { fetchCandidates, HORROR_CATEGORIES } from './wikimedia.js';
 import { buildWallpaperShortcut } from './shortcut.js';
-import { runNightly, scheduleNightly } from './nightly.js';
+import { runNightly, scheduleNightly, backfillDimensions } from './nightly.js';
+import { isPhoneFriendly } from './aspect.js';
 import { runSeed } from './seed.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -33,6 +34,9 @@ function toPublic(img) {
     upvotes: img.upvotes ?? undefined,
     downvotes: img.downvotes ?? undefined,
     day: img.day ?? undefined,
+    width: img.width ?? undefined,
+    height: img.height ?? undefined,
+    phone_friendly: img.width && img.height ? isPhoneFriendly(img.width, img.height) : undefined,
   };
 }
 
@@ -174,6 +178,17 @@ app.post('/api/moderation/nightly', requireAdmin, async (req, res) => {
     res.json(summary);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Measure any stored images missing pixel dimensions (so selection can prefer
+// portrait). Runs automatically in the nightly job; this triggers it on demand.
+app.post('/api/moderation/backfill-dimensions', requireAdmin, async (req, res) => {
+  try {
+    const result = await backfillDimensions({ limit: Number(req.body?.limit) || 200 });
+    res.json(result);
+  } catch (err) {
+    res.status(502).json({ error: `backfill failed: ${err.message}` });
   }
 });
 

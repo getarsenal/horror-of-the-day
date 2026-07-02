@@ -52,4 +52,10 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_images_status ON images(status);
 `);
 
+// --- Migrations for existing databases ------------------------------------
+// Add image dimension columns if an older DB predates them.
+const imageCols = db.prepare('PRAGMA table_info(images)').all().map((c) => c.name);
+if (!imageCols.includes('width')) db.exec('ALTER TABLE images ADD COLUMN width INTEGER');
+if (!imageCols.includes('height')) db.exec('ALTER TABLE images ADD COLUMN height INTEGER');
+
 export default db;

@@ -1,4 +1,5 @@
 import db from './db.js';
+import { isPhoneFriendly } from './aspect.js';
 
 /** Today's date in YYYY-MM-DD (UTC). Override for testing/timezones. */
 export function today(date = new Date()) {
@@ -10,15 +11,15 @@ export function today(date = new Date()) {
  * unless explicitly approved (e.g. trusted curated seed data).
  * Returns { id, created } — created=false if the URL already existed.
  */
-export function addImage({ title, image_url, source_url, credit, submitted_by, status }) {
+export function addImage({ title, image_url, source_url, credit, submitted_by, status, width, height }) {
   if (!title || !image_url) throw new Error('title and image_url are required');
   const existing = db.prepare('SELECT id FROM images WHERE image_url = ?').get(image_url);
   if (existing) return { id: existing.id, created: false };
 
   const info = db
     .prepare(
-      `INSERT INTO images (title, image_url, source_url, credit, submitted_by, status)
-       VALUES (@title, @image_url, @source_url, @credit, @submitted_by, @status)`
+      `INSERT INTO images (title, image_url, source_url, credit, submitted_by, status, width, height)
+       VALUES (@title, @image_url, @source_url, @credit, @submitted_by, @status, @width, @height)`
     )
     .run({
       title,
@@ -27,8 +28,23 @@ export function addImage({ title, image_url, source_url, credit, submitted_by, s
       credit: credit ?? null,
       submitted_by: submitted_by ?? null,
       status: status ?? 'pending',
+      width: width ?? null,
+      height: height ?? null,
     });
   return { id: info.lastInsertRowid, created: true };
+}
+
+/** Record measured pixel dimensions for an image (used by the backfill). */
+export function setDimensions(id, width, height) {
+  const info = db.prepare('UPDATE images SET width = ?, height = ? WHERE id = ?').run(width, height, id);
+  return info.changes > 0;
+}
+
+/** Images we haven't measured yet, so the backfill can fill them in. */
+export function imagesMissingDimensions(limit = 100) {
+  return db
+    .prepare('SELECT id, image_url FROM images WHERE width IS NULL OR height IS NULL LIMIT ?')
+    .all(limit);
 }
 
 export function setStatus(id, status) {
@@ -111,8 +127,12 @@ export function horrorOfTheDay(day = today(), { cooldownDays = 7 } = {}) {
 
   // Candidates: approved, and not featured within the cooldown window.
   const board = leaderboard(200).filter((img) => !featuredRecently(img.id, day, cooldownDays));
+  // Prefer phone-shaped (portrait/square) images so wallpapers fit cleanly;
+  // only fall back to landscape/unmeasured images if there are no good ones.
+  const friendly = board.filter((img) => isPhoneFriendly(img.width, img.height));
+  const pool = friendly.length ? friendly : board;
   // If everything is on cooldown (small catalogs), fall back to the full board.
-  const pick = board[0] ?? leaderboard(1)[0];
+  const pick = pool[0] ?? leaderboard(1)[0];
   if (!pick) return null;
 
   db.prepare(

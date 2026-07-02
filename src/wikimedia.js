@@ -5,6 +5,8 @@
 // Everything imported still lands in the `pending` moderation queue — nothing
 // goes live until a human approves it.
 
+import { isPhoneFriendly } from './aspect.js';
+
 const COMMONS_API = 'https://commons.wikimedia.org/w/api.php';
 
 export const HORROR_CATEGORIES = [
@@ -42,15 +44,15 @@ async function commons(params) {
  * Fetch up to `limit` image candidates from a single Commons category.
  * Returns [{ title, image_url, source_url, credit }].
  */
-export async function fetchCategory(category, limit = 10) {
+export async function fetchCategory(category, limit = 10, { phoneOnly = true } = {}) {
   const data = await commons({
     action: 'query',
     generator: 'categorymembers',
     gcmtitle: `Category:${category}`,
     gcmtype: 'file',
-    gcmlimit: String(Math.min(limit * 2, 50)),
+    gcmlimit: String(Math.min(limit * 4, 100)), // over-fetch: many will be landscape
     prop: 'imageinfo',
-    iiprop: 'url|extmetadata',
+    iiprop: 'url|size|extmetadata',
     iiurlwidth: '1290', // request a phone-wallpaper-friendly rendering
   });
 
@@ -62,6 +64,11 @@ export async function fetchCategory(category, limit = 10) {
     const file = info.url || '';
     if (!IMAGE_EXT.test(file)) continue; // skip SVG/GIF/video/etc.
 
+    const width = info.width ?? null;
+    const height = info.height ?? null;
+    // Only pull portrait/square images so wallpapers fit a phone cleanly.
+    if (phoneOnly && !isPhoneFriendly(width, height)) continue;
+
     const meta = info.extmetadata ?? {};
     const artist = stripHtml(meta.Artist?.value);
     const license = meta.LicenseShortName?.value;
@@ -70,6 +77,8 @@ export async function fetchCategory(category, limit = 10) {
       image_url: info.thumburl || info.url,
       source_url: info.descriptionurl || `https://commons.wikimedia.org/wiki/${encodeURIComponent(page.title)}`,
       credit: [artist, license].filter(Boolean).join(' · ') || 'Wikimedia Commons',
+      width,
+      height,
     });
     if (out.length >= limit) break;
   }
@@ -77,12 +86,12 @@ export async function fetchCategory(category, limit = 10) {
 }
 
 /** Pull from several categories at once, de-duplicated by image URL. */
-export async function fetchCandidates({ categories = HORROR_CATEGORIES, perCategory = 5 } = {}) {
+export async function fetchCandidates({ categories = HORROR_CATEGORIES, perCategory = 5, phoneOnly = true } = {}) {
   const seen = new Set();
   const results = [];
   for (const cat of categories) {
     try {
-      const items = await fetchCategory(cat, perCategory);
+      const items = await fetchCategory(cat, perCategory, { phoneOnly });
       for (const item of items) {
         if (seen.has(item.image_url)) continue;
         seen.add(item.image_url);
@@ -94,6 +103,38 @@ export async function fetchCandidates({ categories = HORROR_CATEGORIES, perCateg
     }
   }
   return results;
+}
+
+// Derive a Commons "File:Name.ext" title from an image URL we stored, so we can
+// look up its dimensions later. Handles Special:FilePath links (seed data) and
+// upload.wikimedia.org thumbnail URLs (imported data).
+export function fileTitleFromUrl(url = '') {
+  // Commons normalizes "_" and " " to the same title; the API returns spaces,
+  // so normalize here too or the backfill's title keys won't match the response.
+  const norm = (name) => `File:${decodeURIComponent(name).replace(/_/g, ' ')}`;
+  const fp = url.match(/Special:FilePath\/([^?#]+)/i);
+  if (fp) return norm(fp[1]);
+  const thumb = url.match(/\/commons\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^/]+?\.(?:jpe?g|png))/i);
+  if (thumb) return norm(thumb[1]);
+  return null;
+}
+
+/** Look up { width, height } for up to 50 Commons file titles at once. */
+export async function fetchDimensionsForTitles(titles) {
+  if (!titles.length) return {};
+  const data = await commons({
+    action: 'query',
+    titles: titles.slice(0, 50).join('|'),
+    prop: 'imageinfo',
+    iiprop: 'size',
+  });
+  const pages = data?.query?.pages ?? {};
+  const dims = {};
+  for (const page of Object.values(pages)) {
+    const info = page.imageinfo?.[0];
+    if (info?.width && info?.height) dims[page.title] = { width: info.width, height: info.height };
+  }
+  return dims;
 }
 
 function stripHtml(html) {

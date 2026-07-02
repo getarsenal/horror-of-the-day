@@ -10,11 +10,42 @@
 // step 2 still runs even if the import fails (e.g. blocked egress).
 
 import * as store from './store.js';
-import { fetchCandidates, HORROR_CATEGORIES } from './wikimedia.js';
+import { fetchCandidates, fetchDimensionsForTitles, fileTitleFromUrl, HORROR_CATEGORIES } from './wikimedia.js';
 
 /** The YYYY-MM-DD (UTC) date one day after `now`. */
 export function tomorrow(now = new Date()) {
   return store.today(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+}
+
+/**
+ * Measure any stored images that don't have pixel dimensions yet (seed data,
+ * older imports) so the daily selection can prefer phone-shaped ones. `lookup`
+ * is injectable for tests. Best-effort: unmeasurable URLs are skipped.
+ */
+export async function backfillDimensions({ limit = 200, lookup = fetchDimensionsForTitles, log = () => {} } = {}) {
+  const missing = store.imagesMissingDimensions(limit);
+  if (!missing.length) return { measured: 0, missing: 0 };
+
+  const idsByTitle = new Map();
+  for (const img of missing) {
+    const title = fileTitleFromUrl(img.image_url);
+    if (!title) continue;
+    if (!idsByTitle.has(title)) idsByTitle.set(title, []);
+    idsByTitle.get(title).push(img.id);
+  }
+
+  const titles = [...idsByTitle.keys()];
+  let measured = 0;
+  for (let i = 0; i < titles.length; i += 50) {
+    const dims = await lookup(titles.slice(i, i + 50));
+    for (const [title, { width, height }] of Object.entries(dims)) {
+      for (const id of idsByTitle.get(title) ?? []) {
+        if (store.setDimensions(id, width, height)) measured += 1;
+      }
+    }
+  }
+  log(`dimensions: measured ${measured}/${missing.length} unmeasured image(s)`);
+  return { measured, missing: missing.length };
 }
 
 export async function runNightly({
@@ -24,9 +55,10 @@ export async function runNightly({
   perCategory = 5,
   cooldownDays = 7,
   importer = fetchCandidates, // injectable for tests
+  dimensionLookup = fetchDimensionsForTitles, // injectable for tests
   log = () => {},
 } = {}) {
-  const summary = { ranAt: now.toISOString(), import: null, preselected: null };
+  const summary = { ranAt: now.toISOString(), import: null, dimensions: null, preselected: null };
 
   // Step 1: import into the moderation queue (best-effort).
   if (doImport) {
@@ -48,6 +80,14 @@ export async function runNightly({
       summary.import = { error: err.message };
       log(`import skipped: ${err.message}`);
     }
+  }
+
+  // Step 1b: measure images missing dimensions so selection can prefer portrait.
+  try {
+    summary.dimensions = await backfillDimensions({ lookup: dimensionLookup, log });
+  } catch (err) {
+    summary.dimensions = { error: err.message };
+    log(`dimensions backfill skipped: ${err.message}`);
   }
 
   // Step 2: pre-select tomorrow's horror (idempotent — a second run is a no-op).

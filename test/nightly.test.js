@@ -26,7 +26,7 @@ test('runNightly imports into the pending queue and pre-selects tomorrow', async
   ];
 
   const now = new Date('2026-03-10T04:00:00Z');
-  const summary = await nightly.runNightly({ now, importer: fakeImporter });
+  const summary = await nightly.runNightly({ now, importer: fakeImporter, dimensionLookup: async () => ({}) });
 
   // Import landed in the queue as pending (not votable yet — guardrail intact).
   assert.deepEqual(summary.import, { found: 1, added: 1 });
@@ -50,7 +50,7 @@ test('a failing import does not block pre-selection', async () => {
   };
 
   const now = new Date('2026-05-01T04:00:00Z');
-  const summary = await nightly.runNightly({ now, importer: boom });
+  const summary = await nightly.runNightly({ now, importer: boom, dimensionLookup: async () => ({}) });
 
   assert.equal(summary.import.error, 'egress blocked (403)');
   assert.equal(summary.preselected.day, '2026-05-02');
@@ -71,6 +71,7 @@ test('doImport:false skips the import step entirely', async () => {
     now: new Date('2026-06-01T04:00:00Z'),
     doImport: false,
     importer: spy,
+    dimensionLookup: async () => ({}),
   });
 
   assert.equal(called, false, 'importer must not be called when doImport is false');

@@ -60,6 +60,7 @@ npm run import:wikimedia -- 5   # ~5 images per category
 | `CH_DB_PATH`     | `data/horror-of-the-day.db` | SQLite location (`:memory:` for tests) |
 | `CH_NIGHTLY`     | *(off)*          | `1` runs the nightly job in-process            |
 | `CH_SEED_ON_START` | *(on)*         | `0` disables auto-seeding an empty catalog     |
+| `CH_MAX_ASPECT`  | `1.0`            | Max width/height for a "phone-friendly" image  |
 
 See **[DEPLOY.md](DEPLOY.md)** for the full env-var list. (The `CH_` prefix is a
 legacy short-name from the project's original repo; it's internal only — nobody
